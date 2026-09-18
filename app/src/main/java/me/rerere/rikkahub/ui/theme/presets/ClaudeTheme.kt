@@ -9,8 +9,14 @@ import me.rerere.rikkahub.R
 import me.rerere.rikkahub.ui.theme.PresetTheme
 
 /**
- * Claude 风格：象牙白/米色的暖中性底色，赤陶橙作为强调色，
- * 牛皮棕与马尼拉黄作为点缀色。
+ * Claude 风格：象牙白/米色的暖中性底色，Slate 深色（浅色）/ 米白（深色）作为前景强调色，
+ * 米黄（#F2EBDE）作为强调块底色，牛皮棕与马尼拉黄作为点缀色。
+ *
+ * 底色分工（浅色）：页面用 [surfaceContainer]/[background] 的象牙白，卡片与输入框用纯白；
+ * 深色则反过来：页面用最暗的 #141413，卡片/面板抬到 #262624，输入框再压回 #0A0A09。
+ *
+ * 前景强调色刻意保持无彩色：Anthropic 色板里 Kraft/Manilla/Cloud 系列对米色底的对比度都在
+ * 3:1 以下，只能当填充色，当链接与图标色读不清；他们自己的界面对文字色也是用 Slate。
  */
 val ClaudeThemePreset by lazy {
     PresetTheme(
@@ -23,10 +29,11 @@ val ClaudeThemePreset by lazy {
     )
 }
 
-private val primaryLight = Color(0xFFC96442)
+//region 浅色：底色 #FAF9F5，卡片/输入框 #FFFFFF，强调块 #F2EBDE
+private val primaryLight = Color(0xFF191919)
 private val onPrimaryLight = Color(0xFFFFFFFF)
-private val primaryContainerLight = Color(0xFFF7E3D9)
-private val onPrimaryContainerLight = Color(0xFF8A3E23)
+private val primaryContainerLight = Color(0xFFF2EBDE)
+private val onPrimaryContainerLight = Color(0xFF3D3929)
 private val secondaryLight = Color(0xFF6F675C)
 private val onSecondaryLight = Color(0xFFFFFFFF)
 private val secondaryContainerLight = Color(0xFFE9E6DC)
@@ -46,23 +53,25 @@ private val onSurfaceLight = Color(0xFF262624)
 private val surfaceVariantLight = Color(0xFFEDEAE0)
 private val onSurfaceVariantLight = Color(0xFF6F675C)
 private val outlineLight = Color(0xFFBDB7A9)
-private val outlineVariantLight = Color(0xFFE5E1D6)
+private val outlineVariantLight = Color(0xFFC7C1B3)
 private val scrimLight = Color(0xFF000000)
 private val inverseSurfaceLight = Color(0xFF33312C)
 private val inverseOnSurfaceLight = Color(0xFFF7F5EF)
-private val inversePrimaryLight = Color(0xFFFFB59B)
-private val surfaceDimLight = Color(0xFFE7E3D8)
+private val inversePrimaryLight = Color(0xFFF2EBDE)
+private val surfaceDimLight = Color(0xFFF0EEE6)
 private val surfaceBrightLight = Color(0xFFFFFFFF)
 private val surfaceContainerLowestLight = Color(0xFFFFFFFF)
-private val surfaceContainerLowLight = Color(0xFFF7F5EF)
-private val surfaceContainerLight = Color(0xFFF2F0E8)
-private val surfaceContainerHighLight = Color(0xFFEDEAE0)
-private val surfaceContainerHighestLight = Color(0xFFE7E3D8)
+private val surfaceContainerLowLight = Color(0xFFFFFFFF)
+private val surfaceContainerLight = Color(0xFFFAF9F5)
+private val surfaceContainerHighLight = Color(0xFFFFFFFF)
+private val surfaceContainerHighestLight = Color(0xFFF0EEE6)
+//endregion
 
-private val primaryDark = Color(0xFFE4906E)
-private val onPrimaryDark = Color(0xFF4A1B0B)
-private val primaryContainerDark = Color(0xFF7A3620)
-private val onPrimaryContainerDark = Color(0xFFFFDBCE)
+//region 深色：底色 #141413，卡片/面板 #262624，输入框 #0A0A09，强调色 #F2EBDE
+private val primaryDark = Color(0xFFF2EBDE)
+private val onPrimaryDark = Color(0xFF262624)
+private val primaryContainerDark = Color(0xFF423E35)
+private val onPrimaryContainerDark = Color(0xFFF2EBDE)
 private val secondaryDark = Color(0xFFD3CCBF)
 private val onSecondaryDark = Color(0xFF383429)
 private val secondaryContainerDark = Color(0xFF4A453A)
@@ -75,25 +84,26 @@ private val errorDark = Color(0xFFFFB4A6)
 private val onErrorDark = Color(0xFF5F1508)
 private val errorContainerDark = Color(0xFF82271A)
 private val onErrorContainerDark = Color(0xFFFFDAD3)
-private val backgroundDark = Color(0xFF1F1E1D)
+private val backgroundDark = Color(0xFF141413)
 private val onBackgroundDark = Color(0xFFEDEAE3)
-private val surfaceDark = Color(0xFF1F1E1D)
+private val surfaceDark = Color(0xFF141413)
 private val onSurfaceDark = Color(0xFFEDEAE3)
 private val surfaceVariantDark = Color(0xFF3A372F)
 private val onSurfaceVariantDark = Color(0xFFCBC5B8)
 private val outlineDark = Color(0xFF5A564C)
-private val outlineVariantDark = Color(0xFF3A372F)
+private val outlineVariantDark = Color(0xFF48443A)
 private val scrimDark = Color(0xFF000000)
 private val inverseSurfaceDark = Color(0xFFEDEAE3)
 private val inverseOnSurfaceDark = Color(0xFF33312C)
-private val inversePrimaryDark = Color(0xFFC96442)
-private val surfaceDimDark = Color(0xFF1F1E1D)
-private val surfaceBrightDark = Color(0xFF44423E)
-private val surfaceContainerLowestDark = Color(0xFF171614)
-private val surfaceContainerLowDark = Color(0xFF262624)
-private val surfaceContainerDark = Color(0xFF2B2A27)
-private val surfaceContainerHighDark = Color(0xFF343230)
-private val surfaceContainerHighestDark = Color(0xFF3E3C37)
+private val inversePrimaryDark = Color(0xFF191919)
+private val surfaceDimDark = Color(0xFF141413)
+private val surfaceBrightDark = Color(0xFF262624)
+private val surfaceContainerLowestDark = Color(0xFF0A0A09)
+private val surfaceContainerLowDark = Color(0xFF0A0A09)
+private val surfaceContainerDark = Color(0xFF262624)
+private val surfaceContainerHighDark = Color(0xFF262624)
+private val surfaceContainerHighestDark = Color(0xFF2E2E2C)
+//endregion
 
 private val lightScheme = lightColorScheme(
     primary = primaryLight,

@@ -21,20 +21,23 @@ data class PresetTheme(
     }
 }
 
+/** 默认主题：新安装、主题 ID 失效、删除自定义主题时都回落到它。 */
+val DefaultPresetTheme: PresetTheme by lazy { ClaudeThemePreset }
+
 val PresetThemes by lazy {
     listOf(
+        ClaudeThemePreset,
         SakuraThemePreset,
         OceanThemePreset,
         SpringThemePreset,
         AutumnThemePreset,
         BlackThemePreset,
         MinimalThemePreset,
-        ClaudeThemePreset,
     )
 }
 
 fun findPresetTheme(id: String): PresetTheme {
-    return PresetThemes.find { it.id == id } ?: SakuraThemePreset
+    return PresetThemes.find { it.id == id } ?: DefaultPresetTheme
 }
 
 fun findThemeById(id: String, customThemes: List<CustomTheme>): PresetTheme? {
