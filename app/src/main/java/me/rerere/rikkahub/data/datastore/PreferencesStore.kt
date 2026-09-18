@@ -154,6 +154,9 @@ class SettingsStore(
         // 赞助提醒
         val SPONSOR_ALERT_DISMISSED_AT = intPreferencesKey("sponsor_alert_dismissed_at")
 
+        // FlowBee：用户点过「不用了」，不再提示把默认模型切到 FlowBee
+        val FLOWBEE_DEFAULT_HINT_DISMISSED = booleanPreferencesKey("flowbee_default_hint_dismissed")
+
         // Uses the same DataStore singleton without starting settings flows or requiring Koin.
         internal suspend fun restoreBeforeInitialization(context: Context, settings: Settings) {
             require(!settings.init) { "Cannot restore uninitialized settings" }
@@ -218,6 +221,7 @@ class SettingsStore(
                 preferences[BACKUP_REMINDER_CONFIG] = JsonInstant.encodeToString(settings.backupReminderConfig)
                 preferences[LAUNCH_COUNT] = settings.launchCount
                 preferences[SPONSOR_ALERT_DISMISSED_AT] = settings.sponsorAlertDismissedAt
+                preferences[FLOWBEE_DEFAULT_HINT_DISMISSED] = settings.flowBeeDefaultHintDismissed
             }
         }
     }
@@ -315,10 +319,16 @@ class SettingsStore(
                 } ?: BackupReminderConfig(),
                 launchCount = preferences[LAUNCH_COUNT] ?: 0,
                 sponsorAlertDismissedAt = preferences[SPONSOR_ALERT_DISMISSED_AT] ?: 0,
+                flowBeeDefaultHintDismissed = preferences[FLOWBEE_DEFAULT_HINT_DISMISSED] ?: false,
             )
         }
         .map {
             var providers = it.providers.ifEmpty { DEFAULT_PROVIDERS }.toMutableList()
+            // 下架的内置提供商（老版本已写进 DataStore 且 builtIn 导致用户删不掉）在这里剔除；
+            // 填过密钥的保留，不当着用户的面删他自己的配置。
+            providers.removeAll { provider ->
+                provider.id in REMOVED_BUILT_IN_PROVIDER_IDS && !provider.hasUserKey
+            }
             DEFAULT_PROVIDERS.forEach { defaultProvider ->
                 if (providers.none { it.id == defaultProvider.id }) {
                     providers.add(defaultProvider.copyProvider())
@@ -334,6 +344,10 @@ class SettingsStore(
                     )
                 } else provider
             }.toMutableList()
+
+            // 上面新增的内置 provider 是追加到列表末尾的，而 FlowBee 是这个版本的主入口，
+            // 排在首位才容易被找到。sortedBy 是稳定排序，其余 provider 的相对顺序不受影响。
+            providers = providers.sortedBy { if (it.id == FLOWBEE_PROVIDER_ID) 0 else 1 }.toMutableList()
             val assistants = it.assistants.ifEmpty { DEFAULT_ASSISTANTS }.toMutableList()
             DEFAULT_ASSISTANTS.forEach { defaultAssistant ->
                 if (assistants.none { it.id == defaultAssistant.id }) {
@@ -566,6 +580,9 @@ data class Settings(
     val backupReminderConfig: BackupReminderConfig = BackupReminderConfig(),
     val launchCount: Int = 0,
     val sponsorAlertDismissedAt: Int = 0,
+    // 用户在设置页点过「不用了」：表示他清楚 FlowBee 可用但选择不用它当默认模型。
+    // 记住这个选择，之后不再提醒；否则每次进设置页都要怼一次。
+    val flowBeeDefaultHintDismissed: Boolean = false,
 ) {
     companion object {
         // 构造一个用于初始化的settings, 但它不能用于保存，防止使用初始值存储
@@ -760,13 +777,6 @@ private val DEFAULT_TTS_PROVIDERS = listOf(
     TTSProviderSetting.SystemTTS(
         id = DEFAULT_SYSTEM_TTS_ID,
         name = "",
-    ),
-    TTSProviderSetting.OpenAI(
-        id = Uuid.parse("e36b22ef-ca82-40ab-9e70-60cad861911c"),
-        name = "AiHubMix",
-        baseUrl = "https://aihubmix.com/v1",
-        model = "gpt-4o-mini-tts",
-        voice = "alloy",
     )
 )
 

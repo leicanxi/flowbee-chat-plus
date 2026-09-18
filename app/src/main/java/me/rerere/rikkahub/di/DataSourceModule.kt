@@ -18,6 +18,7 @@ import me.rerere.rikkahub.data.ai.transformers.TemplateTransformer
 import me.rerere.rikkahub.data.api.RikkaHubAPI
 import me.rerere.rikkahub.data.api.SponsorAPI
 import me.rerere.rikkahub.data.datastore.SettingsStore
+import me.rerere.rikkahub.data.flowbee.FlowBeeClient
 import me.rerere.rikkahub.data.sync.BackupManager
 import me.rerere.rikkahub.data.db.AppDatabaseFactory
 import me.rerere.rikkahub.data.db.AppDatabase
@@ -189,6 +190,11 @@ val dataSourceModule = module {
 
     single {
         SponsorAPI.create(get())
+    }
+
+    // FlowBee 设置页用：校验令牌 + 换算余额。放在 single 里，让站点展示配置的缓存能跨页面复用。
+    single {
+        FlowBeeClient(get())
     }
 
     single {

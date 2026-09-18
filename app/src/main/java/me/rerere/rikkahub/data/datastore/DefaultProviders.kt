@@ -16,7 +16,72 @@ import kotlin.uuid.Uuid
 
 val DEFAULT_AUTO_MODEL_ID = Uuid.parse("b7055fb4-39f9-4042-a88a-0d80ed76cf08")
 
+/**
+ * 内置 FlowBee 提供商。
+ *
+ * 用固定 Uuid 是为了让「设置页的 FlowBee 卡片」和「提供商详情页」指向**同一份数据**：
+ * 设置页填密钥 = 给这个条目写 `apiKey`，不会产生第二份存储。
+ */
+val FLOWBEE_PROVIDER_ID: Uuid = Uuid.parse("7f9c1a52-3b0d-4e6a-9c21-5d8b0f4a7c31")
+
+/**
+ * 已下架的内置提供商：AiHubMix / 小马算力 / 302.AI / 随想AI网关 / APIMart / MaruCode。
+ *
+ * 这些条目在旧版本里已经写进用户的 DataStore，而 `builtIn = true` 让用户在 UI 上
+ * **无法删除**它们 —— 只从 DEFAULT_PROVIDERS 里删掉是不够的，装过旧版的机器上会永久残留。
+ * 加载设置时会把它们剔除，但**已填过密钥的不动**，避免无提示地扔掉用户自己的配置。
+ */
+val REMOVED_BUILT_IN_PROVIDER_IDS: Set<Uuid> = setOf(
+    Uuid.parse("1b1395ed-b702-4aeb-8bc1-b681c4456953"), // AiHubMix
+    Uuid.parse("da020a90-f7b3-4c29-b90e-c511a0630630"), // 小马算力
+    Uuid.parse("da93779f-3956-48cc-82ef-67bb482eaaf7"), // 302.AI
+    Uuid.parse("aecf04fd-cb5c-4582-aed2-e8bf393923fd"), // 随想AI网关
+    Uuid.parse("2a05506f-3a59-450a-a493-33a82bc85a81"), // APIMart
+    Uuid.parse("afbc54ad-807e-4455-9594-7d7a546356ad"), // MaruCode
+)
+
+/** 该提供商是否已被用户配置过（填过密钥）。 */
+val ProviderSetting.hasUserKey: Boolean
+    get() = when (this) {
+        is ProviderSetting.OpenAI -> apiKey.isNotBlank()
+        is ProviderSetting.Google -> apiKey.isNotBlank()
+        is ProviderSetting.Claude -> apiKey.isNotBlank()
+    }
+
 val DEFAULT_PROVIDERS = listOf(
+    ProviderSetting.OpenAI(
+        id = FLOWBEE_PROVIDER_ID,
+        name = "FlowBee",
+        baseUrl = "https://flowbee.top/v1",
+        apiKey = "",
+        enabled = true,
+        builtIn = true,
+        balanceOption = BalanceOption(
+            enabled = true,
+            apiPath = "/api/usage/token/",
+            // 站点额度单位 500000 = ¥1（`/api/status` 的 quota_per_unit）。
+            // 这里只保证「提供商详情页」显示的数字量级正确；设置页的余额走 FlowBeeClient，
+            // 以 `/api/status` 的实时配置为准，站点改了额度单位不用改这里。
+            resultPath = "data.total_available / 500000",
+        ),
+        description = {
+            Text(
+                text = buildAnnotatedString {
+                    append("FlowBee 官方接入：在设置页填入密钥即可使用，无需自行配置接口地址。")
+                    appendLine()
+                    append("密钥获取：")
+                    withLink(LinkAnnotation.Url("https://flowbee.top/")) {
+                        withStyle(SpanStyle(MaterialTheme.colorScheme.primary)) {
+                            append("https://flowbee.top")
+                        }
+                    }
+                }
+            )
+        },
+        shortDescription = {
+            Text("官方直连，填入密钥即可使用")
+        },
+    ),
     ProviderSetting.OpenAI(
         id = Uuid.parse("1eeea727-9ee5-4cae-93e6-6fb01a4d051e"),
         name = "OpenAI",
@@ -30,64 +95,6 @@ val DEFAULT_PROVIDERS = listOf(
         apiKey = "",
         enabled = true,
         builtIn = true
-    ),
-    ProviderSetting.OpenAI(
-        id = Uuid.parse("1b1395ed-b702-4aeb-8bc1-b681c4456953"),
-        name = "AiHubMix",
-        baseUrl = "https://aihubmix.com/v1",
-        apiKey = "",
-        enabled = true,
-        builtIn = true,
-        description = {
-            Text(
-                text = buildAnnotatedString {
-                    append("提供 OpenAI、Claude、Google Gemini 等主流模型的高并发和稳定服务")
-                    appendLine()
-                    append("官网：")
-                    withLink(LinkAnnotation.Url("https://aihubmix.com?aff=pG7r")) {
-                        withStyle(SpanStyle(MaterialTheme.colorScheme.primary)) {
-                            append("https://aihubmix.com")
-                        }
-                    }
-                    appendLine()
-                    append("充值: ")
-                    withLink(LinkAnnotation.Url("https://console.aihubmix.com/topup")) {
-                        withStyle(SpanStyle(MaterialTheme.colorScheme.primary)) {
-                            append("https://console.aihubmix.com/topup")
-                        }
-                    }
-                }
-            )
-        },
-        shortDescription = {
-            Text(
-                text = "支持gpt, claude, gemini等200+模型"
-            )
-        },
-    ),
-    ProviderSetting.OpenAI(
-        id = Uuid.parse("2a05506f-3a59-450a-a493-33a82bc85a81"),
-        name = "APIMart",
-        baseUrl = "https://api.apimart.ai/v1",
-        apiKey = "",
-        enabled = false,
-        builtIn = true,
-        description = {
-            Text(
-                text = buildAnnotatedString {
-                    append("APIMart 是专注 AI 图片/视频生成的低价 API 平台，GPT-Image-2 低至 $0.006/张，1 美元可出图 160+ 张。图片、视频一套异步 API 通吃，提交任务拿 ID、回调取结果，跑批万张不超时、换模型不改代码。按量付费、无月费。")
-                    appendLine()
-                    withLink(LinkAnnotation.Url("https://go.apimart.ai/gh-rikkahub")) {
-                        withStyle(SpanStyle(MaterialTheme.colorScheme.primary)) {
-                            append("通过此注册链接注册即可开用")
-                        }
-                    }
-                }
-            )
-        },
-        shortDescription = {
-            Text("AI 图片/视频生成，GPT-Image-2 低至 $0.006/张")
-        },
     ),
     ProviderSetting.OpenAI(
         id = Uuid.parse("56a94d29-c88b-41c5-8e09-38a7612d6cf8"),
@@ -155,22 +162,6 @@ val DEFAULT_PROVIDERS = listOf(
         )
     ),
     ProviderSetting.OpenAI(
-        id = Uuid.parse("da020a90-f7b3-4c29-b90e-c511a0630630"),
-        name = "小马算力",
-        baseUrl = "https://api.tokenpony.cn/v1",
-        apiKey = "",
-        enabled = false,
-        builtIn = true,
-        description = {
-            MarkdownBlock(
-                content = """
-                    小马算力是一家提供国产模型的API网关服务，使用统一接口接入多种模型
-                    官网: [tokenpony.cn](https://www.tokenpony.cn/79clb)
-                """.trimIndent()
-            )
-        }
-    ),
-    ProviderSetting.OpenAI(
         id = Uuid.parse("f76cae46-069a-4334-ab8e-224e4979e58c"),
         name = "阿里云百炼",
         baseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -203,26 +194,6 @@ val DEFAULT_PROVIDERS = listOf(
         builtIn = true
     ),
     ProviderSetting.OpenAI(
-        id = Uuid.parse("da93779f-3956-48cc-82ef-67bb482eaaf7"),
-        name = "302.AI",
-        baseUrl = "https://api.302.ai/v1",
-        apiKey = "",
-        enabled = false,
-        builtIn = true,
-        description = {
-            Text(
-                text = buildAnnotatedString {
-                    append("企业级AI服务, 官网：")
-                    withLink(LinkAnnotation.Url("https://302.ai/")) {
-                        withStyle(SpanStyle(MaterialTheme.colorScheme.primary)) {
-                            append("https://302.ai/")
-                        }
-                    }
-                }
-            )
-        }
-    ),
-    ProviderSetting.OpenAI(
         id = Uuid.parse("ef5d149b-8e34-404b-818c-6ec242e5c3c5"),
         name = "腾讯Hunyuan",
         baseUrl = "https://api.hunyuan.cloud.tencent.com/v1",
@@ -237,60 +208,6 @@ val DEFAULT_PROVIDERS = listOf(
         apiKey = "",
         enabled = false,
         builtIn = true,
-        useResponseApi = true,
-    ),
-    ProviderSetting.OpenAI(
-        id = Uuid.parse("aecf04fd-cb5c-4582-aed2-e8bf393923fd"),
-        name = "随想AI网关",
-        baseUrl = "https://sui-xiang.com/v1",
-        apiKey = "",
-        enabled = false,
-        builtIn = true,
-        description = {
-            Text(
-                text = buildAnnotatedString {
-                    append("可靠高效的 API 中继服务，提供 Claude、Codex、Gemini 等中继服务。注重隐私·无数据倒卖·无模型掺水，充值额度 1:1，按量付费。多线路冗余、跨区域容灾、自动故障切换，长链路 SSE 不中断。\n")
-                    append("官网：")
-                    withLink(LinkAnnotation.Url("https://sui-xiang.com")) {
-                        withStyle(SpanStyle(MaterialTheme.colorScheme.primary)) {
-                            append("https://sui-xiang.com")
-                        }
-                    }
-                }
-            )
-        },
-        shortDescription = {
-            Text(
-                text = "Claude、Codex、Gemini 等中继服务，1:1 充值"
-            )
-        },
-    ),
-    ProviderSetting.OpenAI(
-        id = Uuid.parse("afbc54ad-807e-4455-9594-7d7a546356ad"),
-        name = "MaruCode",
-        baseUrl = "https://api.muteki.site/v1",
-        apiKey = "",
-        enabled = false,
-        builtIn = true,
-        description = {
-            Text(
-                text = buildAnnotatedString {
-                    append("MaruCode 是一家偶尔做做慈善的小破站 API，自营号池，主要提供 Codex、Claude Code、GPT Image 等主流模型，支持 Websocket 协议，明码标价(Codex 0.25x, CC 1.5x)，透明汇率(1:1)。")
-                    appendLine()
-                    withLink(LinkAnnotation.Url("https://api.muteki.site/register?aff=Rikkahub&promo=Rikkahub")) {
-                        withStyle(SpanStyle(MaterialTheme.colorScheme.primary)) {
-                            append("新用户注册送 2 刀")
-                        }
-                    }
-                    appendLine()
-                    withLink(LinkAnnotation.Url("https://images-2.muteki.site")) {
-                        withStyle(SpanStyle(MaterialTheme.colorScheme.primary)) {
-                            append("生图工作台🖼️")
-                        }
-                    }
-                }
-            )
-        },
         useResponseApi = true,
     ),
     ProviderSetting.Claude(
