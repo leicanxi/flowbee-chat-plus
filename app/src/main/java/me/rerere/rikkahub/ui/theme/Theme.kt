@@ -46,24 +46,40 @@ fun RikkahubTheme(
     content: @Composable () -> Unit
 ) {
     val settings by rememberUserSettingsState()
-
-    val darkTheme = when (colorMode) {
-        ColorMode.SYSTEM -> isSystemInDarkTheme()
-        ColorMode.LIGHT -> false
-        ColorMode.DARK -> true
-    }
     val amoledDarkMode by rememberAmoledDarkMode()
 
+    RikkahubTheme(
+        darkTheme = when (colorMode) {
+            ColorMode.SYSTEM -> isSystemInDarkTheme()
+            ColorMode.LIGHT -> false
+            ColorMode.DARK -> true
+        },
+        preset = findThemeById(settings.themeId, settings.customThemes)
+            ?: findPresetTheme(settings.themeId),
+        amoledDarkMode = amoledDarkMode,
+        dynamicColor = settings.dynamicColor,
+        content = content,
+    )
+}
+
+/**
+ * 预览安全的重载：主题来源全部由参数给出，不读 Koin 与 SharedPreferences，
+ * 因此可以在 @Preview 中还原真实外观。
+ */
+@Composable
+fun RikkahubTheme(
+    darkTheme: Boolean,
+    preset: PresetTheme = DefaultPresetTheme,
+    amoledDarkMode: Boolean = false,
+    dynamicColor: Boolean = false,
+    content: @Composable () -> Unit
+) {
     val colorScheme = when {
-        settings.dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        else -> {
-            val theme = findThemeById(settings.themeId, settings.customThemes)
-                ?: findPresetTheme(settings.themeId)
-            theme.getColorScheme(dark = darkTheme)
-        }
+        else -> preset.getColorScheme(dark = darkTheme)
     }
     val colorSchemeConverted = remember(darkTheme, amoledDarkMode, colorScheme) {
         if (darkTheme && amoledDarkMode) {
