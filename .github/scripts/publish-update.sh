@@ -75,15 +75,20 @@ if [ -f release-notes.md ]; then
 fi
 
 if [ -z "${CHANGELOG//[[:space:]]/}" ]; then
-  echo "==> 从提交记录生成更新说明"
   if [ -n "$PREV_COMMIT" ] && git cat-file -e "${PREV_COMMIT}^{commit}" 2>/dev/null; then
+    # 正常路径：只列出"上次发布之后"新增的提交
+    echo "==> 从提交记录生成更新说明（自 ${PREV_COMMIT:0:8} 起）"
     CHANGELOG="$(git log --no-merges --pretty=format:'- %s' "${PREV_COMMIT}..HEAD")"
+    # 去掉"改版本号"这类对用户没意义的提交
+    CHANGELOG="$(printf '%s\n' "$CHANGELOG" | grep -v -E '^- (chore: )?(bump|release|版本|更新依赖)' || true)"
+    CHANGELOG="$(printf '%s\n' "$CHANGELOG" | head -n 30)"
   else
-    CHANGELOG="$(git log --no-merges -n 20 --pretty=format:'- %s' HEAD)"
+    # 没有上一次的发布记录（首次发布，或线上 update.json 被清掉）。
+    # 此时不存在"从旧版升级上来"的用户，列历史提交只会把一堆 chore 塞给用户看；
+    # 给一句固定文案更干净。下一次发布就会走上面的增量路径。
+    echo "==> 没有上一次发布记录，按首次发布处理"
+    CHANGELOG="- 首个公开版本，欢迎体验"
   fi
-  # 去掉"改版本号"这类对用户没意义的提交
-  CHANGELOG="$(printf '%s\n' "$CHANGELOG" | grep -v -E '^- (chore: )?(bump|release|版本)' || true)"
-  CHANGELOG="$(printf '%s\n' "$CHANGELOG" | head -n 30)"
 fi
 
 if [ -z "${CHANGELOG//[[:space:]]/}" ]; then
