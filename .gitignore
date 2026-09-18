@@ -11,3 +11,6 @@ local.properties
 .cursor
 .history
 .kotlin
+
+# 本地工作记忆 / 临时脚本，不进版本库
+.workbuddy/
