@@ -21,7 +21,9 @@ import me.rerere.rikkahub.BuildConfig
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
-private const val API_URL = "https://updates.rikka-ai.com/"
+// 自建的更新说明文件（内容为 version / buildNumber / publishedAt / changelog / downloads）
+// 文件放在自己的 R2 存储桶上，路径固定不变；安装包的地址写在这个文件里，可以每次都不一样
+private const val API_URL = "https://fbc-dl.flowbee.top/app/update.json"
 
 class UpdateChecker(
     private val client: OkHttpClient,
@@ -46,7 +48,7 @@ class UpdateChecker(
                             .get()
                             .addHeader(
                                 "User-Agent",
-                                "RikkaHub ${BuildConfig.VERSION_NAME} #${BuildConfig.VERSION_CODE}"
+                                "FlowBee ${BuildConfig.VERSION_NAME} #${BuildConfig.BUILD_NUMBER}"
                             )
                             .build()
                     ).await()
@@ -102,7 +104,15 @@ data class UpdateInfo(
     val version: String,
     val publishedAt: String,
     val changelog: String,
-    val downloads: List<UpdateDownload>
+    val downloads: List<UpdateDownload>,
+    /**
+     * 单调递增的构建序号。判断"有没有新版本"只看它，不看 [version]。
+     *
+     * 为什么不比版本号字符串：fork 的版本号从 0.x 起步，而存量用户装的是上游的 2.5.1，
+     * 按 SemVer 比大小会得出"本地更新"的结论，老用户永远收不到更新提示。
+     * 用纯数字就没这个坑，版本号想怎么编都行。
+     */
+    val buildNumber: Int = 0,
 )
 
 /**

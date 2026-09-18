@@ -14,6 +14,48 @@ plugins {
     alias(libs.plugins.baselineprofile)
 }
 
+// ——— FlowBee 版本号 ———
+// 基础版本号在 gradle.properties（flowbee.versionBase / flowbee.versionPrerelease），发版时只改那里。
+// 构建序号由 CI 注入（GitHub Actions 的 run_number），本机构建时为 null。
+//
+// 两个数字各管一件事，不要混：
+//   versionName —— 只给人看，随便怎么编（beta 后缀、从 0 开始都不影响判定）
+//   BUILD_NUMBER —— 机器判断"有没有新版本"的唯一依据，必须单调递增
+val flowBeeBuildNumber: Int? =
+    providers.environmentVariable("FLOWBEE_BUILD_NUMBER").orNull?.toIntOrNull()
+
+val flowBeeVersionBase: String =
+    providers.gradleProperty("flowbee.versionBase").getOrElse("0.1.0")
+
+val flowBeeVersionPrerelease: String =
+    providers.gradleProperty("flowbee.versionPrerelease").getOrElse("")
+
+val flowBeeVersionName: String = when {
+    flowBeeVersionPrerelease.isBlank() && flowBeeBuildNumber == null -> flowBeeVersionBase
+    flowBeeVersionPrerelease.isBlank() -> "$flowBeeVersionBase.$flowBeeBuildNumber"
+    flowBeeBuildNumber == null -> "$flowBeeVersionBase-$flowBeeVersionPrerelease.dev"
+    else -> "$flowBeeVersionBase-$flowBeeVersionPrerelease.$flowBeeBuildNumber"
+}
+
+// 本地构建设 0：更新判定会认为"永远有新版本"，仅影响开发机上的提示卡片
+val flowBeeBuildNumberValue: Int = flowBeeBuildNumber ?: 0
+
+// versionCode 只在"覆盖安装"时被系统比较，必须是单调递增的整数；
+// 加 100000 是为了保证一定大于 fork 之前的 186
+val flowBeeVersionCode: Int = if (flowBeeBuildNumber != null) 100_000 + flowBeeBuildNumber else 1
+
+// 供 CI 读取最终版本号，避免版本号的拼接规则在 workflow 里再抄一遍（抄一遍就一定会漂移）
+tasks.register("printFlowBeeVersion") {
+    val versionNameValue = flowBeeVersionName
+    val versionCodeValue = flowBeeVersionCode
+    val buildNumberValue = flowBeeBuildNumberValue
+    doLast {
+        println("FLOWBEE_VERSION_NAME=$versionNameValue")
+        println("FLOWBEE_VERSION_CODE=$versionCodeValue")
+        println("FLOWBEE_BUILD_NUMBER=$buildNumberValue")
+    }
+}
+
 android {
     namespace = "me.rerere.rikkahub"
     compileSdk = 37
@@ -22,8 +64,10 @@ android {
         applicationId = "me.rerere.rikkahub"
         minSdk = 26
         targetSdk = 37
-        versionCode = 186
-        versionName = "2.5.1"
+        versionCode = flowBeeVersionCode
+        versionName = flowBeeVersionName
+
+        buildConfigField("int", "BUILD_NUMBER", flowBeeBuildNumberValue.toString())
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
