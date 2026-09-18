@@ -167,7 +167,7 @@ internal class McpOAuthCoordinator(
                 val registration = oauthClient.registerClient(
                     registrationEndpoint = registrationEndpoint,
                     request = OAuthHttpClient.ClientRegistrationRequest(
-                        clientName = config.commonOptions.name.ifBlank { "RikkaHub" },
+                        clientName = config.commonOptions.name.ifBlank { "FlowBee Chat" },
                         redirectUris = listOf(redirectUri),
                         scope = scope,
                     ),

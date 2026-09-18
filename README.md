@@ -1,6 +1,6 @@
 <div align="center">
   <img src="docs/icon.png" alt="App Icon" width="100" />
-  <h1>RikkaHub</h1>
+  <h1>FlowBee Chat</h1>
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/rikkahub/rikkahub)
 [![Ask DeepWiki](https://img.shields.io/badge/zread.ai-blue?style=flat&logo=readthedocs)](https://zread.ai/rikkahub/rikkahub)
@@ -8,7 +8,9 @@
 A native Android LLM chat client that supports switching between different providers for
 conversations 🤖💬
 
-Click to join our Discord server 👉 [【RikkaHub】](https://discord.gg/9weBqxe5c4)
+> **FlowBee Chat** is a fork of [RikkaHub](https://github.com/rikkahub/rikkahub), maintained for the FlowBee service at <https://flowbee.top>. Upstream branding (update server, docs, community links) has been replaced with FlowBee's own.
+
+Join our QQ group 👉 [【FlowBee】](https://qm.qq.com/q/z93133CVYQ)
 
 [简体中文](README_ZH_CN.md) | [繁體中文](README_ZH_TW.md) | English
 </div>
@@ -20,14 +22,13 @@ Click to join our Discord server 👉 [【RikkaHub】](https://discord.gg/9weBqx
 
 ## 🚀 Download
 
-🔗 [Download from Website](https://rikka-ai.com/download) (Recommended)
+🔗 [Download from flowbee.top](https://flowbee.top) (Recommended)
 
-🔗 [Download from Google Play](https://play.google.com/store/apps/details?id=me.rerere.rikkahub)
 
 > [!WARNING]
 > There are many forked versions of RikkaHub. Issues with forks are unrelated to RikkaHub, so please use forks with caution to avoid privacy leaks or excessive permission requests.
 
-## 💖 Sponsors
+## 💖 Sponsors (of the upstream RikkaHub project)
 
 |                                                                            Sponsor                                                                             | Description                                                                                                                                                                                                                                                                                                                                             |
 |:--------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

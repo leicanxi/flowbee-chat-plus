@@ -1,12 +1,15 @@
 <div align="center">
   <img src="docs/icon.png" alt="App 图标" width="100" />
-  <h1>RikkaHub</h1>
+  <h1>FlowBee Chat</h1>
 
 一个原生Android LLM 聊天客户端，支持切换不同的供应商进行聊天 🤖💬
 
+> **FlowBee Chat** 是 [RikkaHub](https://github.com/rikkahub/rikkahub) 的 fork，为 FlowBee 服务（https://flowbee.top）维护。
+> 上游的品牌信息（更新服务器、文档站、社区入口）已全部替换为 FlowBee 自己的。
+
 [English](README.md) | [繁體中文](README_ZH_TW.md) | 简体中文
 
-点击链接加入群聊 👉 [【RikkaHub】](https://qm.qq.com/q/I8MSU0FkOu)
+点击链接加入群聊 👉 [【FlowBee】](https://qm.qq.com/q/z93133CVYQ)
 
 </div>
 
@@ -18,13 +21,12 @@
 
 ## 🚀 下载
 
-🔗 [前往官网下载](https://rikka-ai.com/download)（推荐）
-🔗 [前往 Google Play 下载](https://play.google.com/store/apps/details?id=me.rerere.rikkahub)
+🔗 [前往 flowbee.top 下载](https://flowbee.top)（推荐）
 
 > [!WARNING]
 > RikkaHub 存在许多 fork 版本，fork 版本出现问题与 RikkaHub 无关，请谨慎使用 fork 版本，避免隐私泄露或者过度索要权限问题。
 
-## 💖 赞助商
+## 💖 赞助商（上游 RikkaHub 项目的赞助商）
 
 |                                                                              赞助商                                                                               | 介绍                                                                                                                                                                                                                                                                                                                                                      |
 |:--------------------------------------------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
