@@ -96,7 +96,6 @@ import me.rerere.rikkahub.data.flowbee.FlowBeeDefaults
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.CardGroup
 import me.rerere.rikkahub.ui.components.ui.Select
-import me.rerere.rikkahub.ui.components.ui.icons.DiscordIcon
 import me.rerere.rikkahub.ui.components.ui.icons.TencentQQIcon
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.Navigator
@@ -104,7 +103,6 @@ import me.rerere.rikkahub.ui.hooks.rememberColorMode
 import me.rerere.rikkahub.ui.theme.ColorMode
 import me.rerere.rikkahub.ui.theme.CustomColors
 import me.rerere.rikkahub.ui.theme.RikkahubTheme
-import me.rerere.rikkahub.utils.joinQQGroup
 import me.rerere.rikkahub.utils.openUrl
 import me.rerere.rikkahub.utils.plus
 import me.rerere.rikkahub.utils.writeClipboardText
@@ -190,6 +188,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
         settings = settings,
         colorMode = colorMode,
         flowBeeHasKey = flowBeeApiKey.isNotBlank(),
+        flowBeeAvailable = flowBeeProvider != null,
         flowBeeBalance = flowBeeBalance,
         flowBeeModelImport = flowBeeModelImport,
         flowBeeModelCount = flowBeeProvider?.models?.size ?: 0,
@@ -218,6 +217,7 @@ private fun SettingPageContent(
     settings: Settings,
     colorMode: ColorMode,
     flowBeeHasKey: Boolean,
+    flowBeeAvailable: Boolean,
     flowBeeBalance: FlowBeeBalance,
     flowBeeModelImport: FlowBeeModelImport,
     flowBeeModelCount: Int,
@@ -256,7 +256,11 @@ private fun SettingPageContent(
         ) {
             if (settings.isNotConfigured()) {
                 item {
-                    ProviderConfigWarningCard(onNavigate)
+                    ProviderConfigWarningCard(
+                        flowBeeAvailable = flowBeeAvailable,
+                        onConnectFlowBee = onFlowBeeInputKey,
+                        onNavigate = onNavigate,
+                    )
                 }
             }
 
@@ -446,30 +450,12 @@ private fun SettingPageContent(
                                         onDismiss = { showQQGroupSheet = false }
                                     )
                                 }
-                                IconButton(
-                                    onClick = {
-                                        context.openUrl("https://discord.gg/9weBqxe5c4")
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = DiscordIcon,
-                                        contentDescription = "Discord",
-                                        tint = MaterialTheme.colorScheme.secondary
-                                    )
-                                }
                             }
                         },
                         headlineContent = { Text(stringResource(R.string.setting_page_about)) },
                     )
                     item(
-                        onClick = {
-                            val docUrl = if (java.util.Locale.getDefault().language == "zh") {
-                                "https://docs.rikka-ai.com/zh/introduction"
-                            } else {
-                                "https://docs.rikka-ai.com/introduction"
-                            }
-                            context.openUrl(docUrl)
-                        },
+                        onClick = { context.openUrl(DOCS_URL) },
                         leadingContent = { Icon(HugeIcons.Book01, null) },
                         supportingContent = { Text(stringResource(R.string.setting_page_documentation_desc)) },
                         headlineContent = { Text(stringResource(R.string.setting_page_documentation)) },
@@ -786,8 +772,20 @@ private fun FlowBeeKeyDialog(
     )
 }
 
+/**
+ * 未配置时的红色提示卡。
+ *
+ * 主按钮**不再**跳「提供商」列表：那条路会让用户手工填一个 key，
+ * 于是错过 FlowBee 的「校验密钥 → 自动导入模型」链路，最后卡在「有 key 但没模型」。
+ * 改成直接弹 FlowBee 密钥框（`onConnectFlowBee`）；只有当内置 FlowBee 提供商
+ * 被用户删掉时，才退回原来的提供商列表（此时没有可接入的目标）。
+ */
 @Composable
-private fun ProviderConfigWarningCard(onNavigate: (Screen) -> Unit) {
+private fun ProviderConfigWarningCard(
+    flowBeeAvailable: Boolean,
+    onConnectFlowBee: () -> Unit,
+    onNavigate: (Screen) -> Unit,
+) {
     Card(
         modifier = Modifier.padding(8.dp),
         colors = CardDefaults.cardColors(
@@ -816,10 +814,22 @@ private fun ProviderConfigWarningCard(onNavigate: (Screen) -> Unit) {
 
             TextButton(
                 onClick = {
-                    onNavigate(Screen.SettingProvider)
+                    if (flowBeeAvailable) {
+                        onConnectFlowBee()
+                    } else {
+                        onNavigate(Screen.SettingProvider)
+                    }
                 }
             ) {
-                Text(stringResource(R.string.setting_page_config))
+                Text(
+                    stringResource(
+                        if (flowBeeAvailable) {
+                            R.string.setting_page_config_flowbee
+                        } else {
+                            R.string.setting_page_config
+                        }
+                    )
+                )
             }
         }
     }
@@ -827,16 +837,19 @@ private fun ProviderConfigWarningCard(onNavigate: (Screen) -> Unit) {
 
 private data class QQGroup(
     val name: String,
-    val key: String? = null,
+    /** qm.qq.com 邀请链接，点开直接拉起 QQ / 浏览器加群。 */
+    val url: String? = null,
+    /** 抖音群这类没有可跳转链接的，只提供群号，点击复制。 */
     val number: String? = null,
     val icon: ImageVector = TencentQQIcon,
 )
 
+private const val DOCS_URL = "https://docs.flowbee.top/flowbee/index.html"
+
 private val QQ_GROUPS = listOf(
-    QQGroup("RikkaHub 一群", "4POE46u9e_zoy1TkNfWdCvueR9CKFJdk"),
-    QQGroup("RikkaHub 二群", "Qsm0whzbPsm1UyNpR683ulLyMZ2Pqrw0"),
-    QQGroup("RikkaHub 三群", "Qc9oP-9tXioZeQEvEvI2_owWtBAIx3lS"),
-    QQGroup("抖音一群", number = "569655479852", icon = HugeIcons.Tiktok),
+    QQGroup("FlowBee QQ 群", url = "https://qm.qq.com/q/z93133CVYQ"),
+    QQGroup("抖音一群（已满）", number = "892926616765", icon = HugeIcons.Tiktok),
+    QQGroup("抖音二群", number = "211824537932", icon = HugeIcons.Tiktok),
 )
 
 @Composable
@@ -852,11 +865,12 @@ private fun QQGroupBottomSheet(onDismiss: () -> Unit) {
             QQ_GROUPS.forEach { group ->
                 ListItem(
                     onClick = {
-                        if (group.number != null) {
-                            context.writeClipboardText(group.number)
-                            Toast.makeText(context, "群号已复制", Toast.LENGTH_SHORT).show()
-                        } else {
-                            context.joinQQGroup(group.key)
+                        when {
+                            group.url != null -> context.openUrl(group.url)
+                            group.number != null -> {
+                                context.writeClipboardText(group.number)
+                                Toast.makeText(context, "群号已复制", Toast.LENGTH_SHORT).show()
+                            }
                         }
                         onDismiss()
                     },
@@ -899,6 +913,7 @@ private fun SettingPagePreview() {
                 settings = Settings.dummy(),
                 colorMode = ColorMode.SYSTEM,
                 flowBeeHasKey = false,
+                flowBeeAvailable = true,
                 flowBeeBalance = FlowBeeBalance.Unknown,
                 flowBeeModelImport = FlowBeeModelImport.Idle,
                 flowBeeModelCount = 0,

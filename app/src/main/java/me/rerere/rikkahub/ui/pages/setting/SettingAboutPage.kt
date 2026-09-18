@@ -102,7 +102,9 @@ fun SettingAboutPage() {
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         AsyncImage(
-                            model = R.mipmap.ic_launcher,
+                            // 专用方图：正方形画布 + 米色底 + 内容居中留边，
+                            // 这样外层 CircleShape 的裁切不会切到蜜蜂（沿用 mipmap 会在圆里露出直角）。
+                            model = R.drawable.ic_about_logo,
                             contentDescription = "Logo",
                             modifier = Modifier
                                 .clip(CircleShape)
@@ -121,8 +123,14 @@ fun SettingAboutPage() {
                         )
 
                         Text(
-                            text = "RikkaHub",
+                            text = stringResource(R.string.app_name),
                             style = MaterialTheme.typography.displaySmall,
+                        )
+
+                        Text(
+                            text = stringResource(R.string.about_page_based_on),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -157,21 +165,21 @@ fun SettingAboutPage() {
                         modifier = Modifier.padding(horizontal = 8.dp),
                     ) {
                         item(
-                            onClick = { context.openUrl("https://rikka-ai.com/") },
+                            onClick = { context.openUrl("https://flowbee.top/") },
                             leadingContent = { Icon(HugeIcons.Earth, null) },
-                            supportingContent = { Text("https://rikka-ai.com") },
+                            supportingContent = { Text("https://flowbee.top") },
                             headlineContent = { Text(stringResource(R.string.about_page_website)) },
                         )
                         item(
-                            onClick = { context.openUrl("https://github.com/rikkahub/rikkahub") },
+                            onClick = { context.openUrl("https://github.com/leicanxi/flowbee-chat-plus") },
                             leadingContent = { Icon(HugeIcons.Github, null) },
-                            supportingContent = { Text("https://github.com/rikkahub/rikkahub") },
+                            supportingContent = { Text("github.com/leicanxi/flowbee-chat-plus") },
                             headlineContent = { Text(stringResource(R.string.about_page_github)) },
                         )
                         item(
-                            onClick = { context.openUrl("https://github.com/rikkahub/rikkahub/blob/master/LICENSE") },
+                            onClick = { context.openUrl("https://github.com/leicanxi/flowbee-chat-plus/blob/master/LICENSE") },
                             leadingContent = { Icon(HugeIcons.File02, null) },
-                            supportingContent = { Text("https://github.com/rikkahub/rikkahub/blob/master/LICENSE") },
+                            supportingContent = { Text(stringResource(R.string.about_page_license_desc)) },
                             headlineContent = { Text(stringResource(R.string.about_page_license)) },
                         )
                     }

@@ -28,6 +28,9 @@ object FlowBeeDefaults {
     /** 钱包页：余额与充值同一页。 */
     const val WALLET_URL: String = "$SITE_URL/wallet"
 
+    /** 赞助页：`#support` 锚点直接落在「支持 FlowBee」那一块，支付在网页里完成。 */
+    const val SPONSORS_URL: String = "$SITE_URL/sponsors#support"
+
     /** provider 的 `baseUrl` → 站点根地址。`https://flowbee.top/v1` → `https://flowbee.top` */
     fun siteRootOf(baseUrl: String): String {
         val trimmed = baseUrl.trim().trimEnd('/')
