@@ -90,9 +90,15 @@ if [ -z "${CHANGELOG//[[:space:]]/}" ]; then
   CHANGELOG="- 常规更新与问题修复"
 fi
 
+# ⚠️ --checksum-algorithm CRC32 不能省：
+# AWS CLI 2.23.0 起默认改发 CRC64-NVME 校验和，而 R2 不支持它，上传会直接报 InternalError。
+# 这是 R2 官方文档给出的规避方式（CLI 版本 2.22.35 / 1.36.40 无此问题）。
+# 上传时必须显式指定，删除/列举不受影响。
+
 # ——— 先传安装包，后传说明：保证用户不会看到一个安装包还不存在的版本 ———
 echo "==> 上传安装包：$APK_KEY"
 aws_s3 s3 cp "$APK_FILE" "s3://$R2_BUCKET/$APK_KEY" \
+  --checksum-algorithm CRC32 \
   --content-type "application/vnd.android.package-archive" \
   --cache-control "public, max-age=31536000, immutable"
 
@@ -134,6 +140,7 @@ PY
 
 echo "==> 上传更新说明：$UPDATE_KEY"
 aws_s3 s3 cp "$BODY_FILE" "s3://$R2_BUCKET/$UPDATE_KEY" \
+  --checksum-algorithm CRC32 \
   --content-type "application/json; charset=utf-8" \
   --cache-control "public, max-age=60"
 # 用 command rm 绕过 shell 里可能存在的 rm 包装（回收站包装对 /tmp 路径会失败）
