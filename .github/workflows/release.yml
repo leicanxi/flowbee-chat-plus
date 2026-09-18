@@ -1,0 +1,113 @@
+name: Release Build
+
+# 推代码就自动打一个包并发布到自己的下载域名；也可以到 Actions 页面手动点一次
+#
+# ⚠️ 不要重命名本文件、也不要删掉重建：构建序号取自 github.run_number，
+#    它是"按 workflow 文件"计数的。改了文件名计数会从 1 重新开始，
+#    结果是 versionCode 回退 —— 手机上覆盖安装会失败，用户还得先卸载。
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+# 同一条分支不并发发布，排队执行，避免两个构建同时写 update.json
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      AWS_EC2_METADATA_DISABLED: "true"
+      R2_BUCKET: pb-files
+      R2_PUBLIC_BASE: https://fbc-dl.flowbee.top
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # 生成更新说明要从上次发布的提交开始算，必须拉全历史
+          submodules: recursive
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # web 模块的 preBuild 会执行 `pnpm run build` 构建前端，必须准备好 Node + pnpm
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web-ui/pnpm-lock.yaml
+
+      # gradle 的 buildWebUi 任务只跑 build 不跑 install，需在此提前安装依赖
+      - name: Install web-ui dependencies
+        working-directory: web-ui
+        run: pnpm install --frozen-lockfile
+
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      - name: Prepare build files
+        run: |
+          # 解码 base64 编码的 keystore 文件
+          echo "${{ secrets.KEY_BASE64 }}" | base64 -d > app/app.key
+
+          # 写入签名配置到 local.properties
+          echo "${{ secrets.SIGNING_CONFIG }}" > local.properties
+
+          # 写入 Google Services 配置
+          echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
+
+      # 版本号由 build.gradle.kts 统一算，这里只负责读，不在 workflow 里重复拼接规则
+      - name: Read version
+        id: version
+        env:
+          FLOWBEE_BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          chmod +x gradlew
+          ./gradlew -q :app:printFlowBeeVersion | tee /tmp/version.txt
+          echo "name=$(grep '^FLOWBEE_VERSION_NAME=' /tmp/version.txt | cut -d= -f2-)" >> "$GITHUB_OUTPUT"
+
+      - name: Gradle Build
+        env:
+          FLOWBEE_BUILD_NUMBER: ${{ github.run_number }}
+        run: ./gradlew assembleRelease
+
+      - name: Publish to R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+          BUILD_NUMBER: ${{ github.run_number }}
+          VERSION_NAME: ${{ steps.version.outputs.name }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          APK="$(ls app/build/outputs/apk/release/*arm64-v8a*.apk | head -n1)"
+          echo "发布安装包：$APK"
+          APK_FILE="$APK" bash .github/scripts/publish-update.sh
+
+      # 发布失败时留一个存档，方便手动补救
+      - name: Upload apk artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flowbee-apk-${{ github.run_number }}
+          path: app/build/outputs/apk/release/*arm64-v8a*.apk
+          retention-days: 7
