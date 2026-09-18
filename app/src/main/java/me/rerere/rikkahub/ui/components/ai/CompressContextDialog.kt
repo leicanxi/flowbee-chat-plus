@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Job
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.ui.components.ui.OutlinedNumberInput
-import me.rerere.rikkahub.ui.components.ui.RabbitLoadingIndicator
+import me.rerere.rikkahub.ui.components.ui.AppIconLoadingIndicator
 
 @Composable
 fun CompressContextDialog(
@@ -72,7 +72,7 @@ fun CompressContextDialog(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        RabbitLoadingIndicator(
+                        AppIconLoadingIndicator(
                             modifier = Modifier.size(32.dp)
                         )
                         Spacer(modifier = Modifier.width(12.dp))
