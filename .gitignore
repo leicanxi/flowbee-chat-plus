@@ -14,3 +14,12 @@ local.properties
 
 # 本地工作记忆 / 临时脚本，不进版本库
 .workbuddy/
+
+# ——— 签名材料：绝对不能进版本库 ———
+# 泄漏的后果是别人能用你的签名打包出"看起来是你发的"安装包
+*.jks
+*.keystore
+app/app.key
+# 注：app/google-services.json 是特意提交的占位配置，不在此忽略。
+# Google 官方说明该文件不属于机密，它本身就会被打进 APK；
+# 以后换成真配置直接用真文件覆盖即可。

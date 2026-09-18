@@ -1,0 +1,49 @@
+{
+  "_readme": "FlowBee 的占位 Firebase 配置：仅为了让构建通过（缺少该文件时 Google 的 google-services 插件会直接让构建失败）。里面没有任何真实项目，崩溃上报与统计实际不工作。要启用真实数据，去 Firebase 控制台建项目并下载 google-services.json，存进 GitHub 仓库密钥 GOOGLE_SERVICES_JSON；CI 会优先使用它。注：按 Google 官方说明该文件不属于机密，它本身就会被打进 APK。",
+  "project_info": {
+    "project_number": "000000000000",
+    "project_id": "flowbee-placeholder",
+    "storage_bucket": "flowbee-placeholder.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+        "android_client_info": {
+          "package_name": "top.flowbee.chat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000001",
+        "android_client_info": {
+          "package_name": "top.flowbee.chat.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

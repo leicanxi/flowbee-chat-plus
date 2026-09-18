@@ -64,16 +64,34 @@ jobs:
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
 
+      # 三个密钥全部通过 env 传入，不要用 ${{ secrets.X }} 直接拼进脚本：
+      # 拼进脚本时一旦密钥里含引号/花括号就会破坏 shell 语法，而且密钥没配置时会被静默替换成空串
       - name: Prepare build files
+        env:
+          KEY_BASE64: ${{ secrets.KEY_BASE64 }}
+          SIGNING_CONFIG: ${{ secrets.SIGNING_CONFIG }}
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: |
-          # 解码 base64 编码的 keystore 文件
-          echo "${{ secrets.KEY_BASE64 }}" | base64 -d > app/app.key
+          set -euo pipefail
+
+          # 缺密钥要立刻报错说清楚，而不是生成一个空文件、等到构建中途报一句"Malformed json"
+          : "${KEY_BASE64:?仓库密钥 KEY_BASE64 未配置：keystore 的 base64 内容}"
+          : "${SIGNING_CONFIG:?仓库密钥 SIGNING_CONFIG 未配置：签名配置（local.properties 内容）}"
+
+          # 解码 keystore
+          printf '%s' "$KEY_BASE64" | base64 -d > app/app.key
 
           # 写入签名配置到 local.properties
-          echo "${{ secrets.SIGNING_CONFIG }}" > local.properties
+          printf '%s\n' "$SIGNING_CONFIG" > local.properties
 
-          # 写入 Google Services 配置
-          echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
+          # Google 服务配置：没提供就用仓库里的占位文件（仅保证能构建，崩溃上报/统计不工作）
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > app/google-services.json
+            echo "==> 使用 Secrets 提供的 google-services.json"
+          else
+            cp .github/scripts/google-services.placeholder.json app/google-services.json
+            echo "==> 未提供 GOOGLE_SERVICES_JSON，使用占位配置（崩溃上报/统计不会工作）"
+          fi
 
       # 版本号由 build.gradle.kts 统一算，这里只负责读，不在 workflow 里重复拼接规则
       - name: Read version
