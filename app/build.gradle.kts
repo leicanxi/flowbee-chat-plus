@@ -61,7 +61,9 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "me.rerere.rikkahub"
+        // 自己的包名：与上游 RikkaHub 可共存、互不干扰（改包名要趁没有用户时做，之后改等于让所有人重装）
+        // namespace（R 类与代码包名）保持不变，两者互相独立
+        applicationId = "top.flowbee.chat"
         minSdk = 26
         targetSdk = 37
         versionCode = flowBeeVersionCode
