@@ -840,7 +840,6 @@
   <string name="setting_page_flowbee_balance">余额</string>
   <string name="setting_page_flowbee_balance_loading">正在获取…</string>
   <string name="setting_page_flowbee_balance_unknown">连接后自动获取</string>
-  <string name="setting_page_flowbee_cancel">取消</string>
   <string name="setting_page_flowbee_checking">正在校验…</string>
   <string name="setting_page_flowbee_connect">连接</string>
   <string name="setting_page_flowbee_connected">已连接到 FlowBee</string>
