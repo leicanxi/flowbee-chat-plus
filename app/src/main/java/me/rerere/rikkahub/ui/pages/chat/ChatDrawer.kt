@@ -170,9 +170,6 @@ fun ChatDrawerContent(
 
     // 更新详情弹窗：只在用户点 badge 时才打开，不再在侧边栏里平铺 changelog
     var showUpdateDetail by remember { mutableStateOf(false) }
-    // 记录"用户已经看过详情的那个版本"。看过就不再显示 badge，
-    // 直到服务端发布一个 buildNumber 更大的版本。退出 App 后重置（可接受，且简化实现）。
-    var seenUpdateVersion by remember { mutableStateOf<String?>(null) }
 
     // fillMaxSize + 透明容器色 + RectangleShape：抽屉铺满整个屏幕，
     // 不再有 300dp 宽度限制，也不再露出右端的圆角。
@@ -252,16 +249,10 @@ fun ChatDrawerContent(
                 // 有更新时在昵称行右侧显示 badge；点开才弹出更新详情
                 if (!isPlayStore) {
                     val info = updateInfo(vm)
-                    val hasUpdate = info != null &&
-                        info.buildNumber > BuildConfig.BUILD_NUMBER &&
-                        info.version != seenUpdateVersion
+                    // 只要服务端版本比本机新，badge 就一直在（不做「已读」记忆）
+                    val hasUpdate = info != null && info.buildNumber > BuildConfig.BUILD_NUMBER
                     if (hasUpdate) {
-                        UpdateBadge(
-                            onClick = {
-                                seenUpdateVersion = info.version
-                                showUpdateDetail = true
-                            }
-                        )
+                        UpdateBadge(onClick = { showUpdateDetail = true })
                     }
                 }
             }
