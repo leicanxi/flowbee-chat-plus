@@ -1,6 +1,7 @@
 package me.rerere.rikkahub.ui.pages.chat
 
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,11 +9,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -42,6 +43,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -49,7 +52,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -68,6 +70,7 @@ import me.rerere.hugeicons.stroke.Search01
 import me.rerere.hugeicons.stroke.Settings03
 import me.rerere.hugeicons.stroke.Sparkles
 import me.rerere.hugeicons.stroke.TransactionHistory
+import me.rerere.rikkahub.BuildConfig
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
 import me.rerere.rikkahub.data.datastore.Settings
@@ -80,7 +83,8 @@ import me.rerere.rikkahub.ui.components.ui.BackupReminderCard
 import me.rerere.rikkahub.ui.components.ui.Greeting
 import me.rerere.rikkahub.ui.components.ui.Tooltip
 import me.rerere.rikkahub.ui.components.ui.UIAvatar
-import me.rerere.rikkahub.ui.components.ui.UpdateCard
+import me.rerere.rikkahub.ui.components.ui.UpdateBadge
+import me.rerere.rikkahub.ui.components.ui.UpdateDetailSheet
 import androidx.compose.ui.draw.clip
 import me.rerere.rikkahub.ui.context.LocalToaster
 import me.rerere.rikkahub.ui.context.Navigator
@@ -90,6 +94,8 @@ import me.rerere.rikkahub.ui.hooks.readBooleanPreference
 import me.rerere.rikkahub.ui.hooks.rememberIsPlayStoreVersion
 import me.rerere.rikkahub.ui.hooks.useEditState
 import me.rerere.rikkahub.ui.modifier.onClick
+import me.rerere.rikkahub.utils.UiState
+import me.rerere.rikkahub.utils.UpdateInfo
 import me.rerere.rikkahub.utils.navigateToChatPage
 import me.rerere.rikkahub.utils.toDp
 import org.koin.androidx.compose.koinViewModel
@@ -162,33 +168,26 @@ fun ChatDrawerContent(
     // Menu popup 状态
     var showMenuPopup by remember { mutableStateOf(false) }
 
-    val updateCheckDisabledUntil = settings.displaySetting.updateCheckDisabledUntilEpochMillis
-    var updateChecksEnabled by remember(updateCheckDisabledUntil) {
-        mutableStateOf(updateCheckDisabledUntil <= System.currentTimeMillis())
-    }
-    LaunchedEffect(updateCheckDisabledUntil) {
-        while (true) {
-            val remaining = updateCheckDisabledUntil - System.currentTimeMillis()
-            if (remaining <= 0) {
-                updateChecksEnabled = true
-                break
-            }
-            updateChecksEnabled = false
-            delay(minOf(remaining, 60 * 60 * 1_000L))
-        }
-    }
+    // 更新详情弹窗：只在用户点 badge 时才打开，不再在侧边栏里平铺 changelog
+    var showUpdateDetail by remember { mutableStateOf(false) }
+    // 记录"用户已经看过详情的那个版本"。看过就不再显示 badge，
+    // 直到服务端发布一个 buildNumber 更大的版本。退出 App 后重置（可接受，且简化实现）。
+    var seenUpdateVersion by remember { mutableStateOf<String?>(null) }
 
+    // fillMaxSize + 透明容器色 + RectangleShape：抽屉铺满整个屏幕，
+    // 不再有 300dp 宽度限制，也不再露出右端的圆角。
     ModalDrawerSheet(
-        modifier = Modifier.width(300.dp)
+        modifier = Modifier.fillMaxSize(),
+        drawerContainerColor = Color.Transparent,
+        drawerShape = RectangleShape,
     ) {
         Column(
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            if (updateChecksEnabled && !isPlayStore) {
-                UpdateCard(vm)
-            }
-
             BackupReminderCard(
                 settings = settings,
                 onClick = { navController.navigate(Screen.Backup) },
@@ -248,6 +247,22 @@ fun ChatDrawerContent(
                     Greeting(
                         style = MaterialTheme.typography.labelMedium,
                     )
+                }
+
+                // 有更新时在昵称行右侧显示 badge；点开才弹出更新详情
+                if (!isPlayStore) {
+                    val info = updateInfo(vm)
+                    val hasUpdate = info != null &&
+                        info.buildNumber > BuildConfig.BUILD_NUMBER &&
+                        info.version != seenUpdateVersion
+                    if (hasUpdate) {
+                        UpdateBadge(
+                            onClick = {
+                                seenUpdateVersion = info.version
+                                showUpdateDetail = true
+                            }
+                        )
+                    }
                 }
             }
 
@@ -416,6 +431,21 @@ fun ChatDrawerContent(
                     },
                 )
             }
+        }
+    }
+
+    // 更新详情弹窗：与原始 UpdateCard 的行为一致（版本 / 发布时间 / changelog / 下载选项）
+    if (showUpdateDetail) {
+        val info = updateInfo(vm)
+        if (info == null) {
+            // 数据没了（比如刷新后失败）就自己关掉，避免留一个空弹窗
+            showUpdateDetail = false
+        } else {
+            UpdateDetailSheet(
+                vm = vm,
+                info = info,
+                onDismissRequest = { showUpdateDetail = false },
+            )
         }
     }
 
@@ -689,6 +719,18 @@ fun ChatDrawerContent(
             }
         }
     }
+}
+
+/**
+ * 取当前拿到的更新信息；没拿到（加载中 / 检查失败 / 被暂停）返回 null。
+ *
+ * 这里刻意不区分"检查失败"和"还在加载"——侧边栏不再报错，
+ * 用户真正想知道的只有"到底有没有新版本"。
+ */
+@Composable
+private fun updateInfo(vm: ChatVM): UpdateInfo? {
+    val state by vm.updateState.collectAsStateWithLifecycle()
+    return (state as? UiState.Success)?.data
 }
 
 @Composable
