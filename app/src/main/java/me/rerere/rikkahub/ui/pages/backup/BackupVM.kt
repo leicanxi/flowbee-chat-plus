@@ -18,6 +18,7 @@ import me.rerere.rikkahub.data.files.saveUploadFromBytes
 import me.rerere.rikkahub.data.repository.ConversationRepository
 import me.rerere.rikkahub.data.sync.importer.ChatboxImporter
 import me.rerere.rikkahub.data.sync.importer.CherryStudioProviderImporter
+import me.rerere.rikkahub.data.sync.importer.DeepSeekImporter
 import me.rerere.rikkahub.data.sync.webdav.WebDavBackupItem
 import me.rerere.rikkahub.data.sync.webdav.WebDavSync
 import me.rerere.rikkahub.data.sync.S3BackupItem
@@ -170,6 +171,51 @@ class BackupVM(
         )
     }
 
+    /**
+     * 导入 DeepSeek 官网导出包（conversations.json）。
+     *
+     * 导出包不含任何 provider 配置，因此只写入对话，不改动现有设置。
+     */
+    suspend fun restoreFromDeepSeek(file: File): DeepSeekRestoreResult = withContext(Dispatchers.IO) {
+        val currentSettings = settings.value
+        var importedConversations = 0
+        var skippedExistingConversations = 0
+        val result = DeepSeekImporter.importStreaming(
+            file = file,
+            assistantId = currentSettings.assistantId,
+            shouldImportConversation = { conversationId ->
+                val exists = conversationRepository.existsConversationById(conversationId)
+                if (exists) skippedExistingConversations++
+                !exists
+            },
+            onConversation = { conversation ->
+                conversationRepository.insertConversation(conversation)
+                importedConversations++
+            }
+        )
+
+        Log.i(
+            TAG,
+            "restoreFromDeepSeek: import $importedConversations conversations, " +
+                "skip $skippedExistingConversations existing, " +
+                "import ${result.importedReasoningParts} reasoning, " +
+                "import ${result.importedSearchParts} search, " +
+                "degrade ${result.skippedAttachmentParts} attachments, " +
+                "skip ${result.skippedEmptyMessages} empty messages, " +
+                "${result.skippedBranchMessages} branch messages and ${result.skippedConversations} conversations"
+        )
+        DeepSeekRestoreResult(
+            importedConversations = importedConversations,
+            skippedExistingConversations = skippedExistingConversations,
+            importedReasoningParts = result.importedReasoningParts,
+            importedSearchParts = result.importedSearchParts,
+            skippedAttachmentParts = result.skippedAttachmentParts,
+            skippedEmptyMessages = result.skippedEmptyMessages,
+            skippedBranchMessages = result.skippedBranchMessages,
+            skippedConversations = result.skippedConversations,
+        )
+    }
+
     fun restoreFromCherryStudio(file: File) {
         val importProviders = CherryStudioProviderImporter.importProviders(file)
 
@@ -241,4 +287,15 @@ data class ChatboxRestoreResult(
     val skippedEmptyMessages: Int,
     val skippedForkMessages: Int,
     val skippedSessions: Int,
+)
+
+data class DeepSeekRestoreResult(
+    val importedConversations: Int,
+    val skippedExistingConversations: Int,
+    val importedReasoningParts: Int,
+    val importedSearchParts: Int,
+    val skippedAttachmentParts: Int,
+    val skippedEmptyMessages: Int,
+    val skippedBranchMessages: Int,
+    val skippedConversations: Int,
 )

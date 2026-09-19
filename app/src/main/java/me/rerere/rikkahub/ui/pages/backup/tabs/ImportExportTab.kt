@@ -159,6 +159,24 @@ fun ImportExportTab(
                             // 清理临时文件
                             tempFile.delete()
                         }
+
+                        "deepseek" -> {
+                            // DeepSeek 官网导出包：只解析 conversations.json，不涉及 provider
+                            val tempFile =
+                                File(context.cacheDir, "temp_deepseek_${System.currentTimeMillis()}.zip")
+
+                            try {
+                                context.contentResolver.openInputStream(sourceUri)?.use { inputStream ->
+                                    FileOutputStream(tempFile).use { outputStream ->
+                                        inputStream.copyTo(outputStream)
+                                    }
+                                }
+
+                                vm.restoreFromDeepSeek(tempFile)
+                            } finally {
+                                tempFile.delete()
+                            }
+                        }
                     }
 
                     toaster.show(
@@ -315,6 +333,24 @@ fun ImportExportTab(
                     supportingContent = { Text(stringResource(R.string.backup_page_import_cherry_studio_desc)) },
                     leadingContent = {
                         if (isRestoring && importType == "cherry") {
+                            CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
+                        } else {
+                            Icon(HugeIcons.FileImport, null)
+                        }
+                    },
+                )
+
+                item(
+                    onClick = if (!isRestoring) {
+                        {
+                            importType = "deepseek"
+                            openDocumentLauncher.launch(arrayOf("application/zip"))
+                        }
+                    } else null,
+                    headlineContent = { Text(stringResource(R.string.backup_page_import_from_deepseek)) },
+                    supportingContent = { Text(stringResource(R.string.backup_page_import_deepseek_desc)) },
+                    leadingContent = {
+                        if (isRestoring && importType == "deepseek") {
                             CircularWavyProgressIndicator(modifier = Modifier.size(24.dp))
                         } else {
                             Icon(HugeIcons.FileImport, null)

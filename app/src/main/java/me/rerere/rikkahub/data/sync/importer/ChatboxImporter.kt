@@ -59,7 +59,7 @@ object ChatboxImporter {
 
         ZipFile(file).use { zip ->
             val manifest = zip.readJsonObject(MANIFEST_PATH, required = true)
-                ?: error("Invalid Chatbox backup: $MANIFEST_PATH not found")
+                ?: error("Invalid Chatbox backup: $MANIFEST_PATH is not a JSON object")
             validateManifest(manifest)
 
             val settingsPath = manifest["data"]?.jsonObjectOrNull
@@ -117,7 +117,7 @@ object ChatboxImporter {
 
             parseSessionEntries(manifest).forEach { sessionEntry ->
                 val session = zip.readJsonObject(sessionEntry.path, required = true)
-                    ?: error("Invalid Chatbox backup: ${sessionEntry.path} not found")
+                    ?: error("Invalid Chatbox backup: ${sessionEntry.path} is not a JSON object")
                 val sessionId = session["id"]?.asString ?: sessionEntry.id
                 if (sessionId.isBlank()) {
                     counters.skippedSessions++
@@ -595,6 +595,7 @@ object ChatboxImporter {
         require(isSafeArchivePath(path)) { "Invalid Chatbox backup entry path: $path" }
         val entry = getEntry(path)
         if (entry == null) {
+            // 抛出而非返回 null，调用方才能区分「条目缺失」与「JSON 顶层不是对象」
             if (required) error("Invalid Chatbox backup: $path not found")
             return null
         }

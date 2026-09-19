@@ -183,6 +183,8 @@
   <string name="backup_page_import_export">本地</string>
   <string name="backup_page_import_from_chatbox">从ChatBox导入</string>
   <string name="backup_page_import_from_cherry_studio">从Cherry Studio导入</string>
+  <string name="backup_page_import_from_deepseek">从 DeepSeek 导入</string>
+  <string name="backup_page_import_deepseek_desc">导入 DeepSeek 官网数据导出中的聊天记录</string>
   <string name="backup_page_import_from_other_app">从其他APP导入</string>
   <string name="backup_page_importing">正在恢复...</string>
   <string name="backup_page_loading_failed">加载备份文件失败: %s</string>
