@@ -191,7 +191,6 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
         flowBeeAvailable = flowBeeProvider != null,
         flowBeeBalance = flowBeeBalance,
         flowBeeModelImport = flowBeeModelImport,
-        flowBeeModelCount = flowBeeProvider?.models?.size ?: 0,
         showFlowBeeDefaultHint = showFlowBeeDefaultHint,
         flowBeeDefaultModelName = flowBeeDefaultModelName,
         onFlowBeeInputKey = { vm.openKeyDialog() },
@@ -220,7 +219,6 @@ private fun SettingPageContent(
     flowBeeAvailable: Boolean,
     flowBeeBalance: FlowBeeBalance,
     flowBeeModelImport: FlowBeeModelImport,
-    flowBeeModelCount: Int,
     showFlowBeeDefaultHint: Boolean,
     flowBeeDefaultModelName: String,
     onFlowBeeInputKey: () -> Unit,
@@ -269,9 +267,8 @@ private fun SettingPageContent(
                     hasKey = flowBeeHasKey,
                     balance = flowBeeBalance,
                     modelImport = flowBeeModelImport,
-                    modelCount = flowBeeModelCount,
                     onInputKey = onFlowBeeInputKey,
-                    onOpenSite = { onNavigate(Screen.WebView(url = FlowBeeDefaults.HOME_URL)) },
+                    onOpenSite = { onNavigate(Screen.WebView(url = FlowBeeDefaults.DASHBOARD_URL)) },
                     onOpenWallet = { onNavigate(Screen.WebView(url = FlowBeeDefaults.WALLET_URL)) },
                     onRefreshBalance = onFlowBeeRefreshBalance,
                 )
@@ -497,17 +494,16 @@ private fun SettingPageContent(
  * FlowBee 服务卡片。
  *
  * 两个子项都保持固定行高、不展开：账号项点击弹窗输入密钥，余额项点击刷新。
- * 右侧的小字跳转分别去站点首页（拿密钥）和钱包页（充值）。
+ * 右侧的小字跳转分别去站点控制台（拿密钥、看用量）和钱包页（充值）。
  *
- * 账号项的副标题承担「连接状态 + 模型数量 + 导入进度」三种信息，
- * 顺序就是用户关心的顺序：先知道通没通，再知道有多少模型可用。
+ * 账号项的副标题只说连接结果，外加导入进度与失败这两个进行时/异常态 ——
+ * 模型数量是动态的，放进这一行只会让每次进设置页的文案都不一样，反而不好扫读。
  */
 @Composable
 private fun FlowBeeCard(
     hasKey: Boolean,
     balance: FlowBeeBalance,
     modelImport: FlowBeeModelImport,
-    modelCount: Int,
     onInputKey: () -> Unit,
     onOpenSite: () -> Unit,
     onOpenWallet: () -> Unit,
@@ -529,7 +525,7 @@ private fun FlowBeeCard(
             headlineContent = { Text(stringResource(R.string.setting_page_flowbee_account)) },
             supportingContent = {
                 Text(
-                    text = flowBeeAccountStatus(hasKey, balance, modelImport, modelCount),
+                    text = flowBeeAccountStatus(hasKey, balance, modelImport),
                     color = if (hasKey && balance is FlowBeeBalance.Invalid) {
                         MaterialTheme.colorScheme.error
                     } else {
@@ -583,7 +579,6 @@ private fun flowBeeAccountStatus(
     hasKey: Boolean,
     balance: FlowBeeBalance,
     modelImport: FlowBeeModelImport,
-    modelCount: Int,
 ): String {
     val connected = stringResource(R.string.setting_page_flowbee_connected)
     return when {
@@ -596,9 +591,6 @@ private fun flowBeeAccountStatus(
         modelImport is FlowBeeModelImport.Failed ->
             "$connected · ${stringResource(R.string.setting_page_flowbee_import_failed)}"
 
-        modelCount > 0 ->
-            "$connected · ${stringResource(R.string.setting_page_flowbee_model_count, modelCount)}"
-
         balance is FlowBeeBalance.Available -> connected
         else -> stringResource(R.string.setting_page_flowbee_disconnected)
     }
@@ -607,7 +599,20 @@ private fun flowBeeAccountStatus(
 @Composable
 private fun flowBeeBalanceText(hasKey: Boolean, balance: FlowBeeBalance): String = when {
     !hasKey -> stringResource(R.string.setting_page_flowbee_balance_unknown)
-    balance is FlowBeeBalance.Available -> balance.text
+    balance is FlowBeeBalance.Available -> {
+        // 主数字是账户余额；令牌额度更小时补一句，否则这一行会让人以为还能花更多。
+        val tokenLimit = balance.tokenLimitText
+        if (tokenLimit == null) {
+            balance.text
+        } else {
+            stringResource(
+                R.string.setting_page_flowbee_balance_with_token_limit,
+                balance.text,
+                tokenLimit,
+            )
+        }
+    }
+
     balance is FlowBeeBalance.Loading -> stringResource(R.string.setting_page_flowbee_balance_loading)
     balance is FlowBeeBalance.Invalid -> "—"
     else -> stringResource(R.string.setting_page_flowbee_balance_unknown)
@@ -916,7 +921,6 @@ private fun SettingPagePreview() {
                 flowBeeAvailable = true,
                 flowBeeBalance = FlowBeeBalance.Unknown,
                 flowBeeModelImport = FlowBeeModelImport.Idle,
-                flowBeeModelCount = 0,
                 showFlowBeeDefaultHint = false,
                 flowBeeDefaultModelName = "GPT-4o",
                 onFlowBeeInputKey = {},

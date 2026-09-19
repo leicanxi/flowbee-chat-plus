@@ -11,6 +11,7 @@ import androidx.compose.ui.text.withStyle
 import me.rerere.ai.provider.BalanceOption
 import me.rerere.ai.provider.ProviderSetting
 import me.rerere.rikkahub.R
+import me.rerere.rikkahub.data.flowbee.FlowBeeDefaults
 import me.rerere.rikkahub.ui.components.richtext.MarkdownBlock
 import kotlin.uuid.Uuid
 
@@ -56,13 +57,21 @@ val DEFAULT_PROVIDERS = listOf(
         apiKey = "",
         enabled = true,
         builtIn = true,
+        // 余额取**账户额度**：`user_quota` 是站点在 `/api/usage/token/` 响应里补的字段。
+        // 令牌自己的 `total_available` 对默认创建的无限额度令牌恒为 0，没有参考价值。
+        //
+        // 地址必须是**绝对地址**：相对路径会被 `getBalance` 拼在 baseUrl（本站是 `.../v1`）后面，
+        // 实际请求到 `/v1/api/usage/token/` —— 实测 404（见 FlowBeeDefaults.TOKEN_USAGE_URL）。
+        //
+        // 两处硬编码，站点那边变了要一起看：
+        // - `/ 500000` 是 `quota_per_unit`。设置页那张卡片读 `/api/status` 的实时配置，不受这里影响；
+        //   这里只是详情页的一行数字，按当前配置写死即可。
+        // - 表达式语言没有兜底语法，响应里缺 `user_quota` 时会静默求值成 0.00（见 JsonExpression），
+        //   也就是**站点要先部署这个字段**，否则详情页会显示成没钱。
         balanceOption = BalanceOption(
             enabled = true,
-            apiPath = "/api/usage/token/",
-            // 站点额度单位 500000 = ¥1（`/api/status` 的 quota_per_unit）。
-            // 这里只保证「提供商详情页」显示的数字量级正确；设置页的余额走 FlowBeeClient，
-            // 以 `/api/status` 的实时配置为准，站点改了额度单位不用改这里。
-            resultPath = "data.total_available / 500000",
+            apiPath = FlowBeeDefaults.TOKEN_USAGE_URL,
+            resultPath = "data.user_quota / 500000",
         ),
         description = {
             Text(

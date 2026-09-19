@@ -28,8 +28,12 @@ sealed interface FlowBeeBalance {
 
     data object Loading : FlowBeeBalance
 
-    /** [text] 已按站点展示口径换算，如 `¥12.34` */
-    data class Available(val text: String) : FlowBeeBalance
+    /**
+     * [text] 已按站点展示口径换算，如 `¥12.34`
+     *
+     * @param tokenLimitText 令牌额度比账户余额更小时才有的补充文案；见 [FlowBeeCheck.Connected]
+     */
+    data class Available(val text: String, val tokenLimitText: String? = null) : FlowBeeBalance
 
     /** key 存在但校验不通过 / 网络异常 */
     data class Invalid(val message: String) : FlowBeeBalance
@@ -160,7 +164,9 @@ class SettingVM(
             _flowBeeBalance.value = FlowBeeBalance.Loading
             val siteRoot = flowBeeSiteRoot()
             _flowBeeBalance.value = when (val result = flowBeeClient.check(key, siteRoot)) {
-                is FlowBeeCheck.Connected -> FlowBeeBalance.Available(result.balanceText)
+                is FlowBeeCheck.Connected ->
+                    FlowBeeBalance.Available(result.balanceText, result.tokenLimitText)
+
                 is FlowBeeCheck.Failed -> FlowBeeBalance.Invalid(result.message)
             }
             val hasModels = flowBeeProvider?.models?.isNotEmpty() == true

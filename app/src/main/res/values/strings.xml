@@ -877,6 +877,7 @@
   <string name="setting_page_flowbee_account">Account</string>
   <string name="setting_page_flowbee_balance">Balance</string>
   <string name="setting_page_flowbee_balance_loading">Fetching…</string>
+  <string name="setting_page_flowbee_balance_with_token_limit">%1$s · key limit %2$s</string>
   <string name="setting_page_flowbee_balance_unknown">Connect first to see your balance</string>
   <string name="setting_page_flowbee_checking">Verifying…</string>
   <string name="setting_page_flowbee_connect">Connect</string>
@@ -892,7 +893,6 @@
   <string name="setting_page_flowbee_key_desc">Sign in on the FlowBee website, open the overview page and copy the key shown there.</string>
   <string name="setting_page_flowbee_key_hint">Key starting with sk-</string>
   <string name="setting_page_flowbee_key_title">FlowBee Key</string>
-  <string name="setting_page_flowbee_model_count">%1$d models</string>
   <string name="setting_page_flowbee_open">Open FlowBee</string>
   <string name="setting_page_flowbee_topup">Top up</string>
   <string name="setting_page_general_settings">General Settings</string>

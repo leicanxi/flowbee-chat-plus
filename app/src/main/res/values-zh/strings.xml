@@ -850,6 +850,7 @@
   <string name="setting_page_flowbee_account">账号</string>
   <string name="setting_page_flowbee_balance">余额</string>
   <string name="setting_page_flowbee_balance_loading">正在获取…</string>
+  <string name="setting_page_flowbee_balance_with_token_limit">%1$s · 令牌剩余 %2$s</string>
   <string name="setting_page_flowbee_balance_unknown">连接后自动获取</string>
   <string name="setting_page_flowbee_checking">正在校验…</string>
   <string name="setting_page_flowbee_connect">连接</string>
@@ -865,7 +866,6 @@
   <string name="setting_page_flowbee_key_desc">在 FlowBee 网站登录后进入概览页，复制页面上的密钥。</string>
   <string name="setting_page_flowbee_key_hint">sk- 开头的密钥</string>
   <string name="setting_page_flowbee_key_title">FlowBee 密钥</string>
-  <string name="setting_page_flowbee_model_count">%1$d 个模型</string>
   <string name="setting_page_flowbee_open">打开 FlowBee</string>
   <string name="setting_page_flowbee_topup">充值</string>
   <string name="setting_page_general_settings">通用设置</string>

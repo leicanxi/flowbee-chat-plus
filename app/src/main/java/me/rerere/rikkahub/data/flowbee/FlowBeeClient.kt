@@ -22,8 +22,24 @@ import java.io.IOException
 object FlowBeeDefaults {
     const val SITE_URL: String = "https://flowbee.top"
 
-    /** 打开站点首页：未登录会进登录页，登录后落在概览页（也就是拿密钥的地方）。 */
-    const val HOME_URL: String = "$SITE_URL/"
+    /**
+     * 令牌额度接口路径。
+     *
+     * **注意它挂在站点根下，不在 `/v1` 兼容层里**：provider 的 `BalanceOption` 如果填相对路径，
+     * `OpenAIProvider.getBalance` 会把它拼在 `baseUrl`（本站是 `https://flowbee.top/v1`）后面，
+     * 请求到 `/v1/api/usage/token/` —— 实测 404。所以对外一律给绝对地址 [TOKEN_USAGE_URL]。
+     */
+    const val TOKEN_USAGE_PATH: String = "/api/usage/token/"
+
+    /** 拼好的绝对地址，供 provider 的 `BalanceOption.apiPath` 使用。 */
+    val TOKEN_USAGE_URL: String = SITE_URL + TOKEN_USAGE_PATH
+
+    /**
+     * 控制台（概览页）：未登录会先跳登录页。密钥就在这一页，用量与日志也在。
+     *
+     * 不带尾部斜杠，直接给具体路由 —— 站点的 `/` 会再兜一次跳转，多一跳没必要。
+     */
+    const val DASHBOARD_URL: String = "$SITE_URL/dashboard"
 
     /** 钱包页：余额与充值同一页。 */
     const val WALLET_URL: String = "$SITE_URL/wallet"
@@ -59,10 +75,15 @@ sealed interface FlowBeeCheck {
     /**
      * 密钥有效。
      *
-     * @param balanceText 已按站点展示口径换算好的额度文案（如 `¥12.34`）；拿不到站点配置时为原始额度数值
-     * @param unlimited 令牌是否不限额度
+     * @param balanceText 主数字，已按站点展示口径换算好（如 `¥12.34`）。站点带上账户额度时它是**账户余额**，
+     *   否则退回令牌额度口径（令牌不限额度时就是「不限额度」）
+     * @param tokenLimitText 令牌自己的剩余额度文案。**只在它比账户余额更小时**才给：这种令牌会先见底，
+     *   主数字只显示账户余额会让人以为还能花更多；不限额度或额度更宽裕时为 `null`
      */
-    data class Connected(val balanceText: String, val unlimited: Boolean = false) : FlowBeeCheck
+    data class Connected(
+        val balanceText: String,
+        val tokenLimitText: String? = null,
+    ) : FlowBeeCheck
 
     /** 密钥无效、站点不可达或返回异常，[message] 可直接展示给用户。 */
     data class Failed(val message: String) : FlowBeeCheck
@@ -71,11 +92,15 @@ sealed interface FlowBeeCheck {
 private class FlowBeeException(message: String) : Exception(message)
 
 /**
- * 只做两件事：校验令牌、把令牌剩余额度换算成站点展示口径。
+ * 只做两件事：校验令牌、把额度换算成站点展示口径。
  *
- * 用的是 NewAPI 自带接口，不需要任何服务端改造：
+ * 用两个接口，账户余额那一项依赖站点补的一个字段（见下）：
  * - `GET /api/status`（公开）→ 额度单位 / 展示类型 / 汇率，决定额度怎么换算
- * - `GET /api/usage/token/`（令牌认证）→ `data.total_available`，即令牌剩余额度（原始值）
+ * - `GET /api/usage/token/`（令牌认证）→ 令牌剩余额度，以及站点补的 `data.user_quota`（账户剩余额度）
+ *
+ * **余额取的是账户额度而不是令牌额度**：令牌表单默认就是不限额度，这类令牌的
+ * `total_available` 恒为 0，照着显示只会得到「不限额度」或者一个假的 0。
+ * 账户额度是钱包页那个数字，也是真正卡住请求的上限。站点还没补 `user_quota` 时退回令牌口径。
  */
 class FlowBeeClient(
     private val client: OkHttpClient,
@@ -106,17 +131,38 @@ class FlowBeeClient(
                 return@withContext FlowBeeCheck.Failed(e.toFriendlyMessage())
             }
 
+            // 账户余额优先；站点是没补 user_quota 的老版本时，才退回下面的令牌口径。
+            val userRemain = usage.userRemainQuota
+            if (userRemain != null) {
+                val display = loadDisplay(siteRoot)
+                return@withContext FlowBeeCheck.Connected(
+                    balanceText = formatQuota(userRemain, display),
+                    tokenLimitText = tokenLimitOf(usage, userRemain, display),
+                )
+            }
+
             if (usage.unlimited) {
-                return@withContext FlowBeeCheck.Connected(balanceText = "不限额度", unlimited = true)
+                return@withContext FlowBeeCheck.Connected(balanceText = "不限额度")
             }
 
             FlowBeeCheck.Connected(balanceText = formatQuota(usage.remainQuota, loadDisplay(siteRoot)))
         }
 
+    /**
+     * 令牌自己还能用多少；不限额度、或额度比账户余额更宽裕时都不提示。
+     *
+     * 只有「令牌先见底」才值得多占一句：那时账户里钱再多也花不出去，只显示账户余额是误导。
+     */
+    private fun tokenLimitOf(usage: TokenUsage, userRemain: Double, display: Display?): String? {
+        if (usage.unlimited) return null
+        if (usage.remainQuota >= userRemain) return null
+        return formatQuota(usage.remainQuota, display)
+    }
+
     private fun fetchTokenUsage(siteRoot: String, key: String): TokenUsage {
         val normalizedKey = FlowBeeDefaults.normalizeKey(key)
         val request = Request.Builder()
-            .url("${siteRoot.trimEnd('/')}/api/usage/token/")
+            .url("${siteRoot.trimEnd('/')}${FlowBeeDefaults.TOKEN_USAGE_PATH}")
             .addHeader("Authorization", "Bearer $normalizedKey")
             .get()
             .build()
@@ -142,6 +188,8 @@ class FlowBeeClient(
             return TokenUsage(
                 remainQuota = data["total_available"]?.jsonPrimitive?.doubleOrNull ?: 0.0,
                 unlimited = data["unlimited_quota"]?.jsonPrimitive?.booleanOrNull ?: false,
+                // 站点补的字段，老版本直接缺键 → 读出来是 null，调用方据此退回令牌口径。
+                userRemainQuota = data["user_quota"]?.jsonPrimitive?.doubleOrNull,
             )
         }
     }
@@ -194,7 +242,12 @@ class FlowBeeClient(
         return "${display.symbol}%.2f".format(amount)
     }
 
-    private data class TokenUsage(val remainQuota: Double, val unlimited: Boolean)
+    private data class TokenUsage(
+        val remainQuota: Double,
+        val unlimited: Boolean,
+        /** 账户剩余额度（原始单位）。站点没带 `user_quota` 时为 `null`，调用方据此退回令牌口径。 */
+        val userRemainQuota: Double?,
+    )
 
     private data class Display(
         val quotaPerUnit: Double,
