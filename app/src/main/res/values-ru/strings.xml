@@ -1077,7 +1077,6 @@
   <string name="tts">TTS</string>
   <string name="unpin_chat">Открепить чат</string>
   <string name="update_card_check_failed">Проверка обновления не удалась</string>
-  <string name="update_card_close">Закрыть</string>
   <string name="update_card_downloading">Идёт загрузка, следите за прогрессом в строке состояния</string>
   <string name="update_card_new_version_found">Найдена новая версия %s</string>
   <string name="update_card_unknown_error">Неизвестная ошибка</string>
