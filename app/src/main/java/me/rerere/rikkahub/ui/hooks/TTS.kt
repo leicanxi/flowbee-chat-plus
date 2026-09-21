@@ -14,7 +14,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import me.rerere.ai.provider.ProviderSetting
 import me.rerere.tts.model.PlaybackState
+import me.rerere.rikkahub.data.datastore.FLOWBEE_PROVIDER_ID
+import me.rerere.rikkahub.data.datastore.Settings
 import me.rerere.rikkahub.data.datastore.SettingsStore
 import me.rerere.rikkahub.data.datastore.getSelectedTTSProvider
 import me.rerere.rikkahub.utils.stripMarkdown
@@ -42,7 +45,6 @@ fun rememberCustomTtsState(): CustomTtsState {
     val ttsState = remember {
         CustomTtsStateImpl(
             context = context.applicationContext,
-            settingsStore = settingsStore
         )
     }
 
@@ -51,8 +53,11 @@ fun rememberCustomTtsState(): CustomTtsState {
         settings.selectedTTSProviderId,
         settings.ttsProviders,
         settings.defaultTTSPlaybackSpeed,
+        // 内置音色的密钥来自 FlowBee 提供商，用户在设置页填/改密钥时也要重新下发 provider，
+        // 否则会拿着旧的空 key 去请求（表现为 401，但设置页看着一切正常）。
+        settings.flowBeeProvider()?.apiKey,
     ) {
-        ttsState.updateProvider(settings.getSelectedTTSProvider())
+        ttsState.updateProvider(settings.getSelectedTTSProvider(), settings.flowBeeProvider())
         ttsState.setSpeed(settings.defaultTTSPlaybackSpeed)
         onDispose { }
     }
@@ -122,7 +127,6 @@ interface CustomTtsState {
  */
 private class CustomTtsStateImpl(
     private val context: Context,
-    private val settingsStore: SettingsStore
 ) : CustomTtsState, KoinComponent {
 
     private val ttsManager by inject<TTSManager>()
@@ -138,8 +142,20 @@ private class CustomTtsStateImpl(
     override val totalChunks: StateFlow<Int> get() = controller.totalChunks
     override val playbackState: StateFlow<PlaybackState> get() = controller.playbackState
 
-    fun updateProvider(provider: TTSProviderSetting?) {
-        controller.setProvider(provider)
+    fun updateProvider(
+        provider: TTSProviderSetting?,
+        flowBeeProvider: ProviderSetting.OpenAI?,
+    ) {
+        // 内置 TTS provider（如 Moss 音色）apiKey 留空，运行时回退用 FlowBee 的 key：
+        // 用户只在设置页填一次 newapi token，聊天与 TTS 共用，换 key 也只改一处。
+        // 判定按 baseUrl 是否指向 FlowBee 中转站，不按 provider 类型 —— 以后新增
+        // 任何类型的 Moss 音色（MiniMax/Step 等）只要走同一中转站同样自动生效。
+        controller.setProvider(
+            provider?.withFlowBeeApiKeyFallback(
+                flowBeeBaseUrl = flowBeeProvider?.baseUrl.orEmpty(),
+                flowBeeKey = flowBeeProvider?.apiKey.orEmpty(),
+            )
+        )
     }
 
     override fun speak(text: String, flushCalled: Boolean) {
@@ -176,5 +192,76 @@ private class CustomTtsStateImpl(
     override fun cleanup() {
         controller.dispose()
         currentJob = null
+    }
+}
+
+/**
+ * 内置的 FlowBee 提供商 —— 用户在设置页填密钥的那一条。
+ *
+ * 设置页的 FlowBee 卡片与提供商详情页读写的是同一份数据（见 FLOWBEE_PROVIDER_ID 的注释），
+ * 所以读它就能拿到用户填的中转站地址与密钥，不需要第二份存储。
+ */
+private fun Settings.flowBeeProvider(): ProviderSetting.OpenAI? =
+    providers
+        .filterIsInstance<ProviderSetting.OpenAI>()
+        .firstOrNull { it.id == FLOWBEE_PROVIDER_ID }
+
+/**
+ * 给内置 TTS provider 补上 FlowBee 的密钥，让用户只需在设置页填一次密钥。
+ *
+ * 两条同时满足才补：
+ * - `apiKey` 为空 —— 用户自己填过密钥的 provider 一律不动；
+ * - `baseUrl` 与 FlowBee 提供商**同源** —— 说明它走的是同一个中转站。
+ *
+ * 刻意按「baseUrl 同源」而不是 provider 类型来判断：以后新增别的类型的内置音色
+ * （MiniMax / Step / …），只要走同一个中转站就自动生效，不必回来改这个函数。
+ * 反过来，将来若有内置音色直连上游，baseUrl 不同源，不会被误填成用户的密钥。
+ */
+private fun TTSProviderSetting.withFlowBeeApiKeyFallback(
+    flowBeeBaseUrl: String,
+    flowBeeKey: String,
+): TTSProviderSetting {
+    if (flowBeeKey.isBlank()) return this
+    val relayOrigin = flowBeeBaseUrl.relayOrigin() ?: return this
+
+    fun shouldFill(apiKey: String, baseUrl: String): Boolean =
+        apiKey.isBlank() && baseUrl.relayOrigin() == relayOrigin
+
+    return when (this) {
+        is TTSProviderSetting.OpenAI ->
+            if (shouldFill(apiKey, baseUrl)) copy(apiKey = flowBeeKey) else this
+        is TTSProviderSetting.Gemini ->
+            if (shouldFill(apiKey, baseUrl)) copy(apiKey = flowBeeKey) else this
+        is TTSProviderSetting.MiniMax ->
+            if (shouldFill(apiKey, baseUrl)) copy(apiKey = flowBeeKey) else this
+        is TTSProviderSetting.Qwen ->
+            if (shouldFill(apiKey, baseUrl)) copy(apiKey = flowBeeKey) else this
+        is TTSProviderSetting.Groq ->
+            if (shouldFill(apiKey, baseUrl)) copy(apiKey = flowBeeKey) else this
+        is TTSProviderSetting.XAI ->
+            if (shouldFill(apiKey, baseUrl)) copy(apiKey = flowBeeKey) else this
+        is TTSProviderSetting.MiMo ->
+            if (shouldFill(apiKey, baseUrl)) copy(apiKey = flowBeeKey) else this
+        is TTSProviderSetting.ElevenLabs ->
+            if (shouldFill(apiKey, baseUrl)) copy(apiKey = flowBeeKey) else this
+        is TTSProviderSetting.Step ->
+            if (shouldFill(apiKey, baseUrl)) copy(apiKey = flowBeeKey) else this
+        is TTSProviderSetting.FishAudio ->
+            if (shouldFill(apiKey, baseUrl)) copy(apiKey = flowBeeKey) else this
+        // 系统 TTS 不联网，没有密钥可说。
+        is TTSProviderSetting.SystemTTS -> this
+    }
+}
+
+/** `https://flowbee.top/v1` → `https://flowbee.top`；解析不出（含空串）返回 null。 */
+private fun String.relayOrigin(): String? {
+    if (isBlank()) return null
+    return try {
+        val uri = java.net.URI(this)
+        val scheme = uri.scheme ?: return null
+        val host = uri.host ?: return null
+        "$scheme://$host".lowercase()
+    } catch (_: Exception) {
+        null
     }
 }

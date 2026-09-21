@@ -773,11 +773,32 @@ internal val DEFAULT_ASSISTANTS = listOf(
 )
 
 val DEFAULT_SYSTEM_TTS_ID = Uuid.parse("026a01a2-c3a0-4fd5-8075-80e03bdef200")
+
+/**
+ * 内置 Moss TTS 提供商（音色库音色）。
+ *
+ * - baseUrl 固定指向 FlowBee 中转站，key 由 app 层在运行时回退（见 TTS.kt
+ *   withFlowBeeApiKeyFallback）：apiKey 留空，用户只需在设置页填一次 FlowBee key。
+ * - 用固定 Uuid 让「缺哪个补哪个」的内置补全逻辑（见本文件加载时的
+ *   DEFAULT_TTS_PROVIDERS.forEach）对老用户升级也能生效，且不会重复插入。
+ * - voice 是 Moss 音色库的 voice_id（`voice` 是 `voice_id` 的兼容别名，已实测）。
+ * - 换默认音色 = 改这里 voice 字段，或复制一份条目改成别的 voice_id。
+ */
+val DEFAULT_MOSS_TTS_ID = Uuid.parse("6f1d2c4e-8a3b-4f5c-9d7e-2b4a6c8d0e1f")
+
 private val DEFAULT_TTS_PROVIDERS = listOf(
     TTSProviderSetting.SystemTTS(
         id = DEFAULT_SYSTEM_TTS_ID,
         name = "",
-    )
+    ),
+    TTSProviderSetting.OpenAI(
+        id = DEFAULT_MOSS_TTS_ID,
+        name = "Moss TTS",
+        apiKey = "",
+        baseUrl = "https://flowbee.top/v1",
+        model = "moss-tts-1.5-flash",
+        voice = "187b0c9b-612c-4019-98fe-c7bb59eb8074",
+    ),
 )
 
 internal val DEFAULT_ASSISTANTS_IDS = DEFAULT_ASSISTANTS.map { it.id }

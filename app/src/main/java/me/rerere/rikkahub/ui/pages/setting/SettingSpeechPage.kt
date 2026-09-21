@@ -690,7 +690,10 @@ private fun TTSProviderItem(
 
                     Text(
                         text = when (provider) {
-                            is TTSProviderSetting.OpenAI -> stringResource(R.string.setting_tts_page_provider_openai)
+                            // 带上具体模型名：OpenAI 类型下可能挂着多家上游（如经中转站的
+                            // moss-tts-1.5-flash），只显示协议名会让多个条目看起来一模一样。
+                            is TTSProviderSetting.OpenAI ->
+                                "${stringResource(R.string.setting_tts_page_provider_openai)} · ${provider.model}"
                             is TTSProviderSetting.Gemini -> stringResource(R.string.setting_tts_page_provider_gemini)
                             is TTSProviderSetting.MiniMax -> "MiniMax"
                             is TTSProviderSetting.SystemTTS -> stringResource(R.string.setting_tts_page_provider_system)
