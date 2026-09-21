@@ -171,8 +171,22 @@ sealed class TTSProviderSetting {
         val apiKey: String = "",
         val baseUrl: String = "https://api.xiaomimimo.com/v1",
         val model: String = "mimo-v2.5-tts",
-        val voice: String = "mimo_default"
+        // 预置音色 ID, 仅 mimo-v2.5-tts 使用
+        val voice: String = "mimo_default",
+        // 音色设计描述, 仅 mimo-v2.5-tts-voicedesign 使用。
+        // 与 voice 分开存放: 两者语义不同, 共用一份值会在切换模型时互相污染
+        val voiceDesignPrompt: String = "",
     ) : TTSProviderSetting() {
+        /**
+         * 当前模型是否走"音色设计"语义。
+         *
+         * true: [voiceDesignPrompt] 作为 role="user" 消息下发, 且不下发 audio.voice
+         * (voicedesign 该消息必填, 且不支持 voice 字段)。
+         * UI 与 provider 都读这里, 避免"哪个模型用哪种语义"的判断散落多处。
+         */
+        val isVoiceDesign: Boolean
+            get() = model.contains("voicedesign", ignoreCase = true)
+
         override fun copyProvider(
             id: Uuid,
             name: String,

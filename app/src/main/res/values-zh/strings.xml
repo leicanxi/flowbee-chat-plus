@@ -1058,6 +1058,8 @@ mDNS 地址：使用 .local 主机名，同一网络中的其他设备可通过�
   <string name="setting_tts_page_title">语音合成</string>
   <string name="setting_tts_page_voice">语音</string>
   <string name="setting_tts_page_voice_description">用于语音合成的声音</string>
+  <string name="setting_tts_page_voice_design_prompt">音色描述</string>
+  <string name="setting_tts_page_voice_design_prompt_description">描述你想要的音色，会作为 user 消息发给模型。例：温柔明亮的年轻女声，语速偏慢</string>
   <string name="setting_tts_page_voice_id">语音 ID</string>
   <string name="setting_tts_page_voice_id_description">语音合成使用的语音 ID</string>
   <string name="setting_tts_page_voice_name">语音名称</string>

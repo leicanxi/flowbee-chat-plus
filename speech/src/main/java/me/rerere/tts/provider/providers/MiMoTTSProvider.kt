@@ -150,10 +150,23 @@ class MiMoTTSProvider : TTSProvider<TTSProviderSetting.MiMo> {
         providerSetting: TTSProviderSetting.MiMo,
         request: TTSRequest
     ): Flow<AudioChunk> = flow {
+        val isVoiceDesign = providerSetting.isVoiceDesign
+        // 音色描述是 voicedesign 的必填 user 消息, 空着只会换回一个语焉不详的上游报错
+        if (isVoiceDesign && providerSetting.voiceDesignPrompt.isBlank()) {
+            throw IllegalStateException("MiMo voicedesign 需要先填写音色描述")
+        }
+
         // OpenAI 兼容的 chat/completions SSE 流式返回 音频增量在 delta.audio.data
         val requestBody = buildJsonObject {
             put("model", providerSetting.model)
             put("messages", buildJsonArray {
+                // voicedesign: 音色设计描述必须以 user 消息给出 (官方要求该消息必填)
+                if (isVoiceDesign) {
+                    add(buildJsonObject {
+                        put("role", "user")
+                        put("content", providerSetting.voiceDesignPrompt)
+                    })
+                }
                 add(buildJsonObject {
                     put("role", "assistant")
                     put("content", request.text)
@@ -161,7 +174,10 @@ class MiMoTTSProvider : TTSProvider<TTSProviderSetting.MiMo> {
             })
             put("audio", buildJsonObject {
                 put("format", "pcm16")
-                put("voice", providerSetting.voice)
+                // voicedesign 不支持 audio.voice, 下发该字段会被上游拒绝
+                if (!isVoiceDesign) {
+                    put("voice", providerSetting.voice)
+                }
             })
             put("stream", true)
         }
@@ -169,8 +185,10 @@ class MiMoTTSProvider : TTSProvider<TTSProviderSetting.MiMo> {
         // baseUrl 允许用户在设置页自定义 这里直接拼接路径
         val httpRequest = Request.Builder()
             .url("${providerSetting.baseUrl}/chat/completions")
-            // MiMo 使用 api-key 头传 token
-            .addHeader("api-key", providerSetting.apiKey)
+            // 官方 api-key 与 Authorization: Bearer 二选一。
+            // 用 Bearer 是因为 NewAPI 这类 OpenAI 兼容中转只认 Authorization, 而官方两种都收,
+            // 于是直连官方和走中转可以共用同一份客户端代码。
+            .addHeader("Authorization", "Bearer ${providerSetting.apiKey}")
             .addHeader("Content-Type", "application/json")
             // JsonObject 的 toString 会输出 JSON 字符串
             .post(requestBody.toString().toRequestBody(JSON_MEDIA_TYPE))
@@ -178,7 +196,7 @@ class MiMoTTSProvider : TTSProvider<TTSProviderSetting.MiMo> {
 
         val processor = MiMoSseProcessor(
             model = providerSetting.model,
-            voice = providerSetting.voice
+            voice = if (isVoiceDesign) "voicedesign" else providerSetting.voice
         )
 
         httpClient.sseFlow(httpRequest).collect { event ->

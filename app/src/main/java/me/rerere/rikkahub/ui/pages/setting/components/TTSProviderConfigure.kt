@@ -272,49 +272,78 @@ private fun MiMoTTSConfiguration(
     }
 
     // Model
+    // 只列客户端真正支持的两个: 预置音色与音色设计。
+    // voiceclone 需要上传音频样本, 客户端还没有入口, 故不列入(仍可手输)。
+    val models = listOf(
+        "mimo-v2.5-tts",
+        "mimo-v2.5-tts-voicedesign"
+    )
+
     FormItem(
         label = { Text(stringResource(R.string.setting_tts_page_model)) },
         description = { Text(stringResource(R.string.setting_tts_page_model_description)) }
     ) {
-        OutlinedTextField(
+        SelectTextField(
             value = setting.model,
+            options = models,
             onValueChange = { newModel ->
                 onValueChange(setting.copy(model = newModel))
             },
+            onOptionSelected = { model ->
+                onValueChange(setting.copy(model = model))
+            },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("mimo-v2-tts") }
+            placeholder = { Text("mimo-v2.5-tts") }
         )
     }
 
-    // Voice
-    val voices = listOf(
-        "mimo_default",
-        "冰糖",
-        "茉莉",
-        "苏打",
-        "白桦",
-        "Mia",
-        "Chloe",
-        "Milo",
-        "Dean"
-    )
-
-    FormItem(
-        label = { Text(stringResource(R.string.setting_tts_page_voice)) },
-        description = { Text(stringResource(R.string.setting_tts_page_voice_description)) }
-    ) {
-        SelectTextField(
-            value = setting.voice,
-            options = voices,
-            onValueChange = { newVoice ->
-                onValueChange(setting.copy(voice = newVoice))
-            },
-            onOptionSelected = { voice ->
-                onValueChange(setting.copy(voice = voice))
-            },
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("mimo_default") }
+    // 音色 / 音色描述: 同一个位置, 语义随模型走。
+    // voicedesign 要的是音色设计描述(会作为 user 消息发出), mimo-v2.5-tts 要的是预置音色 ID,
+    // 两者不是一回事, 所以分别存在 voiceDesignPrompt 与 voice 里, 这里只决定显示哪一个。
+    if (setting.isVoiceDesign) {
+        FormItem(
+            label = { Text(stringResource(R.string.setting_tts_page_voice_design_prompt)) },
+            description = { Text(stringResource(R.string.setting_tts_page_voice_design_prompt_description)) }
+        ) {
+            OutlinedTextField(
+                value = setting.voiceDesignPrompt,
+                onValueChange = { newPrompt ->
+                    onValueChange(setting.copy(voiceDesignPrompt = newPrompt))
+                },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("温柔明亮的年轻女声，语速偏慢") }
+            )
+        }
+    } else {
+        val voices = listOf(
+            "mimo_default",
+            "冰糖",
+            "茉莉",
+            "苏打",
+            "白桦",
+            "Mia",
+            "Chloe",
+            "Milo",
+            "Dean"
         )
+
+        FormItem(
+            label = { Text(stringResource(R.string.setting_tts_page_voice)) },
+            description = { Text(stringResource(R.string.setting_tts_page_voice_description)) }
+        ) {
+            SelectTextField(
+                value = setting.voice,
+                options = voices,
+                onValueChange = { newVoice ->
+                    onValueChange(setting.copy(voice = newVoice))
+                },
+                onOptionSelected = { voice ->
+                    onValueChange(setting.copy(voice = voice))
+                },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("mimo_default") }
+            )
+        }
     }
 }
 

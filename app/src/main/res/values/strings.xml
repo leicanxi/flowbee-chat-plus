@@ -1088,6 +1088,8 @@
   <string name="setting_tts_page_title">Text-to-Speech</string>
   <string name="setting_tts_page_voice">Voice</string>
   <string name="setting_tts_page_voice_description">Voice to use for speech synthesis</string>
+  <string name="setting_tts_page_voice_design_prompt">Voice description</string>
+  <string name="setting_tts_page_voice_design_prompt_description">Describe the voice you want; sent as a user message, e.g. warm, bright young female voice, slightly slow</string>
   <string name="setting_tts_page_voice_id">Voice ID</string>
   <string name="setting_tts_page_voice_id_description">Voice ID for speech synthesis</string>
   <string name="setting_tts_page_voice_name">Voice Name</string>
