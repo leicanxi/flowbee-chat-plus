@@ -91,6 +91,9 @@
   <string name="assistant_page_local_tools_time_info_title">時刻情報</string>
   <string name="assistant_page_local_tools_tts_desc">AIが選択したTTSサービスを使ってテキストを読み上げます</string>
   <string name="assistant_page_local_tools_tts_title">テキスト読み上げ</string>
+  <string name="assistant_page_tab_tts">読み上げ</string>
+  <string name="assistant_tts_page_provider_desc">読み上げに使う TTS サービスと音声を選択</string>
+  <string name="tts_setup_missing_key">読み上げにはキーの設定が必要です：設定で FlowBee キーを入力するか、「音声」で別の TTS サービスを選択してください</string>
   <string name="assistant_page_manage_memory_title">記憶を管理</string>
   <string name="assistant_page_max_tokens">最大トークン数</string>
   <string name="assistant_page_max_tokens_desc">生成する最大トークン数。空白にすると制限なし。</string>

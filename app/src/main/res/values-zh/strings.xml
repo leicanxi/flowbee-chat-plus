@@ -91,6 +91,9 @@
   <string name="assistant_page_local_tools_time_info_title">时间信息</string>
   <string name="assistant_page_local_tools_tts_desc">让AI使用您所选的TTS服务为您朗读文本</string>
   <string name="assistant_page_local_tools_tts_title">文字转语音</string>
+  <string name="assistant_page_tab_tts">语音朗读</string>
+  <string name="assistant_tts_page_provider_desc">选择朗读使用的 TTS 服务与音色</string>
+  <string name="tts_setup_missing_key">语音朗读需要先配置密钥：请在设置中填写 FlowBee 密钥，或前往「语音」选择其它 TTS 服务</string>
   <string name="assistant_page_manage_memory_title">管理记忆</string>
   <string name="assistant_page_max_tokens">最大Token数</string>
   <string name="assistant_page_max_tokens_desc">最大生成Token数量。留空表示无限制。</string>

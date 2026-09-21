@@ -91,6 +91,9 @@
   <string name="assistant_page_local_tools_time_info_title">시간 정보</string>
   <string name="assistant_page_local_tools_tts_desc">AI가 선택한 TTS 서비스를 사용해 텍스트를 음성으로 읽어줍니다</string>
   <string name="assistant_page_local_tools_tts_title">텍스트 음성 변환</string>
+  <string name="assistant_page_tab_tts">읽어주기</string>
+  <string name="assistant_tts_page_provider_desc">읽기에 사용할 TTS 서비스와 음성을 선택하세요</string>
+  <string name="tts_setup_missing_key">읽어주기에는 키 설정이 필요합니다: 설정에서 FlowBee 키를 입력하거나 음성 설정에서 다른 TTS 서비스를 선택하세요</string>
   <string name="assistant_page_manage_memory_title">기억 관리</string>
   <string name="assistant_page_max_tokens">최대 토큰</string>
   <string name="assistant_page_max_tokens_desc">생성할 최대 토큰 수. 제한 없음은 비워두세요.</string>

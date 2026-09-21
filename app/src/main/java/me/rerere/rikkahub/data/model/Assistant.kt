@@ -38,7 +38,9 @@ data class Assistant(
     val customHeaders: List<CustomHeader> = emptyList(),
     val customBodies: List<CustomBody> = emptyList(),
     val mcpServers: Set<Uuid> = emptySet(),
-    val localTools: List<LocalToolOption> = listOf(LocalToolOption.TimeInfo),
+    // 默认开启「文字转语音」：内置了 FlowBee 的默认音色，开箱即可让助手读出来；
+    // 用不上的用户在助手的「语音朗读」页关掉即可（已从本地工具里提到第一层级）。
+    val localTools: List<LocalToolOption> = listOf(LocalToolOption.TimeInfo, LocalToolOption.Tts),
     val enableWebSearch: Boolean = false, // 网络搜索开关(每个助手独立)
     val workspaceId: Uuid? = null,
     val background: String? = null, // 聊天页背景图地址(本地文件 URI 或网络 URL), 为 null 时无背景

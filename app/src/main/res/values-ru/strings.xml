@@ -91,6 +91,9 @@
   <string name="assistant_page_local_tools_time_info_title">Информация о времени</string>
   <string name="assistant_page_local_tools_tts_desc">Позвольте ИИ озвучить текст с помощью выбранного вами сервиса TTS</string>
   <string name="assistant_page_local_tools_tts_title">Преобразование текста в речь</string>
+  <string name="assistant_page_tab_tts">Чтение вслух</string>
+  <string name="assistant_tts_page_provider_desc">Выберите сервис TTS и голос для чтения</string>
+  <string name="tts_setup_missing_key">Для чтения нужен ключ: укажите ключ FlowBee в настройках или выберите другой сервис TTS в разделе «Речь»</string>
   <string name="assistant_page_manage_memory_title">Управление памятью</string>
   <string name="assistant_page_max_tokens">Макс. токенов</string>
   <string name="assistant_page_max_tokens_desc">Максимальное количество токенов для генерации. Оставьте пустым, чтобы не ограничивать.</string>

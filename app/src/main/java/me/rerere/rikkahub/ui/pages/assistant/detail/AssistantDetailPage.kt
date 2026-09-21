@@ -8,6 +8,7 @@ import me.rerere.hugeicons.stroke.Code
 import me.rerere.hugeicons.stroke.Message02
 import me.rerere.hugeicons.stroke.Settings03
 import me.rerere.hugeicons.stroke.Puzzle
+import me.rerere.hugeicons.stroke.VolumeHigh
 import me.rerere.hugeicons.stroke.Wrench01
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -112,6 +113,13 @@ fun AssistantDetailPage(id: String) {
                         leadingContent = { Icon(HugeIcons.Puzzle, null) },
                         supportingContent = { Text(stringResource(R.string.assistant_detail_extensions_desc)) },
                         headlineContent = { Text(stringResource(R.string.assistant_page_tab_extensions)) },
+                        trailingContent = { Icon(HugeIcons.ArrowRight01, null) },
+                    )
+                    item(
+                        onClick = { navController.navigate(Screen.AssistantTts(id)) },
+                        leadingContent = { Icon(HugeIcons.VolumeHigh, null) },
+                        supportingContent = { Text(stringResource(R.string.assistant_page_local_tools_tts_desc)) },
+                        headlineContent = { Text(stringResource(R.string.assistant_page_tab_tts)) },
                         trailingContent = { Icon(HugeIcons.ArrowRight01, null) },
                     )
                     item(

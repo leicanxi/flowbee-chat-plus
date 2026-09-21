@@ -294,7 +294,7 @@ class SettingsStore(
                     JsonInstant.decodeFromString(it)
                 } ?: emptyList(),
                 selectedTTSProviderId = preferences[SELECTED_TTS_PROVIDER]?.let { Uuid.parse(it) }
-                    ?: DEFAULT_SYSTEM_TTS_ID,
+                    ?: DEFAULT_MOSS_TTS_ID,
                 defaultTTSPlaybackSpeed = preferences[DEFAULT_TTS_PLAYBACK_SPEED]?.coerceIn(0.5f, 2.0f) ?: 1.0f,
                 asrProviders = preferences[ASR_PROVIDERS]?.let {
                     JsonInstant.decodeFromString(it)
@@ -565,7 +565,7 @@ data class Settings(
     val webDavConfig: WebDavConfig = WebDavConfig(),
     val s3Config: S3Config = S3Config(),
     val ttsProviders: List<TTSProviderSetting> = DEFAULT_TTS_PROVIDERS,
-    val selectedTTSProviderId: Uuid = DEFAULT_SYSTEM_TTS_ID,
+    val selectedTTSProviderId: Uuid = DEFAULT_MOSS_TTS_ID,
     val defaultTTSPlaybackSpeed: Float = 1.0f,
     val asrProviders: List<ASRProviderSetting> = emptyList(),
     val selectedASRProviderId: Uuid? = null,
