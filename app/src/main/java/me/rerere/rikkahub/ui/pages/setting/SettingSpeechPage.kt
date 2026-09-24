@@ -10,6 +10,9 @@ import me.rerere.hugeicons.stroke.Mic01
 import me.rerere.hugeicons.stroke.Tools
 import me.rerere.hugeicons.stroke.Delete01
 import me.rerere.hugeicons.stroke.VolumeHigh
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,10 +22,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.BottomSheetDefaults
@@ -54,11 +61,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.rerere.rikkahub.R
@@ -69,6 +78,7 @@ import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.AutoAIIcon
 import me.rerere.rikkahub.ui.components.ui.Tag
 import me.rerere.rikkahub.ui.components.ui.TagType
+import me.rerere.rikkahub.ui.hooks.isBuiltInTTSVoice
 import me.rerere.rikkahub.ui.context.LocalTTSState
 import me.rerere.rikkahub.ui.pages.setting.components.ASRProviderConfigure
 import me.rerere.rikkahub.ui.pages.setting.components.TTSProviderConfigure
@@ -78,6 +88,7 @@ import me.rerere.tts.provider.TTSProviderSetting
 import org.koin.androidx.compose.koinViewModel
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import kotlin.uuid.Uuid
 
 @Composable
 fun SettingSpeechPage(vm: SettingVM = koinViewModel()) {
@@ -311,6 +322,15 @@ private fun TTSProviderList(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         state = lazyListState
     ) {
+        // 内置音色试听行：大圆形图标 + 名字，点击试听；音色多了横向滚动。
+        item(key = "builtin_voice_row") {
+            BuiltInVoiceRow(
+                voices = settings.ttsProviders.filter { settings.isBuiltInTTSVoice(it) },
+                selectedId = settings.selectedTTSProviderId,
+                onSelect = { id -> onUpdateSettings(settings.copy(selectedTTSProviderId = id)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         items(settings.ttsProviders, key = { it.id }) { provider ->
             ReorderableItem(
                 state = reorderableState,
@@ -788,6 +808,132 @@ private fun TTSProviderItem(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun BuiltInVoiceRow(
+    voices: List<TTSProviderSetting>,
+    selectedId: Uuid,
+    onSelect: (Uuid) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val tts = LocalTTSState.current
+    val isSpeaking by tts.isSpeaking.collectAsState()
+    val testText = stringResource(R.string.setting_tts_page_test_text)
+    val missingKeyHint = stringResource(R.string.tts_setup_missing_key)
+    // 正在试听哪个音色（引擎同一时刻只播一个）。这个标记刻意不清零 —— 是否显示
+    // 「播放中」由 playingId 与 isSpeaking 共同决定，切换音色时中间那一瞬的
+    // isSpeaking=false 就不会把高亮闪掉。
+    var playingId by remember { mutableStateOf<Uuid?>(null) }
+
+    Column(modifier = modifier) {
+        Text(
+            text = "内置音色",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(horizontal = 4.dp),
+        )
+        // 点一下同时做两件事：换成这个音色 + 听一句。只试听不切换，用户不知道
+        // 到底换没换；只切换不出声，又得回头去找卡片上的播放按钮。这句说明是给
+        // 这个二合一动作兜底的，省掉「点了到底是选还是播」的猜测。
+        Text(
+            text = "点一下即切换为该音色，并试听一句",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 4.dp),
+        )
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 12.dp),
+        ) {
+            items(voices, key = { it.id }) { provider ->
+                BuiltInVoiceItem(
+                    provider = provider,
+                    isSelected = provider.id == selectedId,
+                    isPlaying = isSpeaking && playingId == provider.id,
+                    onClick = {
+                        if (isSpeaking && playingId == provider.id) {
+                            // 再点正在播的那个 = 停止。这是整排唯一能立刻停下来的入口
+                            // （其余点击都被下面的「切换 + 试听」占用）。
+                            tts.stop()
+                        } else {
+                            // 点一下 = 换成这个音色（改选中项，聊天朗读也跟着换）
+                            //        + 立刻试听一句，两个意图一次动作完成。
+                            onSelect(provider.id)
+                            playingId = provider.id
+                            tts.speakPreview(provider, testText, missingKeyHint)
+                        }
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BuiltInVoiceItem(
+    provider: TTSProviderSetting,
+    isSelected: Boolean,
+    isPlaying: Boolean,
+    onClick: () -> Unit,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(96.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(72.dp)
+                .clip(CircleShape)
+                .background(
+                    if (isSelected) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.secondaryContainer
+                    }
+                )
+                .then(
+                    if (isPlaying) {
+                        Modifier.border(3.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                    } else {
+                        Modifier
+                    }
+                )
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (provider is TTSProviderSetting.SystemTTS) {
+                Icon(
+                    imageVector = HugeIcons.VolumeHigh,
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    tint = if (isSelected) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSecondaryContainer
+                    },
+                )
+            } else {
+                Text(
+                    text = provider.name.take(1).ifEmpty { "音" },
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = if (isSelected) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSecondaryContainer
+                    },
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = provider.name.ifEmpty { stringResource(R.string.setting_tts_page_default_name) },
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+        )
     }
 }
 

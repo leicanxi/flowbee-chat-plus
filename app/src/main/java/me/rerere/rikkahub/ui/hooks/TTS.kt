@@ -120,6 +120,15 @@ interface CustomTtsState {
      */
     fun speak(text: String, flushCalled: Boolean = true)
 
+    /**
+     * 用指定的（不一定是当前选中的）音色试听一句 [text]。
+     *
+     * 试听是「临时把合成引擎切到目标音色播一句」：下一次正式 [speak] 或 [stop]
+     * 时会自动恢复成当前选中的音色，不影响正式朗读。
+     * 配置不全（如内置音色还没填 FlowBee 密钥）时就地拦下并给出提示。
+     */
+    fun speakPreview(provider: TTSProviderSetting, text: String, missingKeyHint: String)
+
     /** Stops the current speech and clears the queue. */
     fun stop()
 
@@ -150,6 +159,7 @@ private class CustomTtsStateImpl(
 ) : CustomTtsState, KoinComponent {
 
     private val ttsManager by inject<TTSManager>()
+    private val settingsStore by inject<SettingsStore>()
     private val controller by lazy { me.rerere.tts.controller.TtsController(context, ttsManager) }
 
     private val scope = CoroutineScope(Dispatchers.Main)
@@ -204,12 +214,49 @@ private class CustomTtsStateImpl(
             return
         }
         _setupError.value = null
+        if (_previewing) restoreSelectedProvider()
         val processed = text.stripMarkdown()
         controller.speak(processed, flushCalled)
     }
 
+    /** 试听中标记：为 true 时引擎上挂的是试听音色，下次正式朗读/停止前要恢复。 */
+    private var _previewing = false
+
+    override fun speakPreview(provider: TTSProviderSetting, text: String, missingKeyHint: String) {
+        val settings = settingsStore.settingsFlow.value
+        val flowBee = settings.flowBeeProvider()
+        // 与正式朗读同一套拦截：目标音色指向 FlowBee 中转站但还没填密钥时，给可操作提示。
+        if (flowBee != null && provider.needsFlowBeeKey(flowBee.baseUrl, flowBee.apiKey)) {
+            _setupError.value = missingKeyHint
+            return
+        }
+        _setupError.value = null
+        _previewing = true
+        controller.setProvider(
+            provider.withFlowBeeApiKeyFallback(
+                flowBeeBaseUrl = flowBee?.baseUrl.orEmpty(),
+                flowBeeKey = flowBee?.apiKey.orEmpty(),
+            )
+        )
+        controller.speak(text.stripMarkdown(), flush = true)
+    }
+
+    /** 把引擎的 provider 恢复成当前选中的音色（带 FlowBee 密钥回退）。 */
+    private fun restoreSelectedProvider() {
+        _previewing = false
+        val settings = settingsStore.settingsFlow.value
+        val flowBee = settings.flowBeeProvider()
+        controller.setProvider(
+            settings.getSelectedTTSProvider()?.withFlowBeeApiKeyFallback(
+                flowBeeBaseUrl = flowBee?.baseUrl.orEmpty(),
+                flowBeeKey = flowBee?.apiKey.orEmpty(),
+            )
+        )
+    }
+
     override fun stop() {
         controller.stop()
+        if (_previewing) restoreSelectedProvider()
     }
 
     override fun pause() {
@@ -323,6 +370,18 @@ fun Settings.ttsSetupHint(hint: String): String? {
     val provider = getSelectedTTSProvider() ?: return null
     val flowBee = flowBeeProvider() ?: return null
     return if (provider.needsFlowBeeKey(flowBee.baseUrl, flowBee.apiKey)) hint else null
+}
+
+/**
+ * 判定一条 TTS provider 是否是「内置音色」：系统 TTS，或 baseUrl 与 FlowBee
+ * 中转站同源（即密钥能由 FlowBee 回退补上的音色）。与 [withFlowBeeApiKeyFallback]
+ * 的判定口径一致 —— 新增内置音色只要走同一中转站就会自动出现在试听图标行。
+ */
+fun Settings.isBuiltInTTSVoice(provider: TTSProviderSetting): Boolean {
+    if (provider is TTSProviderSetting.SystemTTS) return true
+    val flowBee = flowBeeProvider() ?: return false
+    val relayOrigin = flowBee.baseUrl.relayOrigin() ?: return false
+    return provider.baseUrlOrEmpty.relayOrigin() == relayOrigin
 }
 
 /** 选中项与 FlowBee 中转站同源，且既没自带密钥、也拿不到回退密钥。 */

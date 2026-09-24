@@ -360,6 +360,14 @@ class SettingsStore(
                     ttsProviders.add(defaultTTSProvider.copyProvider())
                 }
             }
+            // 内置音色改名的存量纠偏：老版本 DataStore 里存的是「Moss TTS」，就地改成新名字。
+            // 只精确匹配旧名字，用户自己改过名的不会被覆盖，也不会反复触发。
+            val mossIndex = ttsProviders.indexOfFirst { provider ->
+                provider.id == DEFAULT_MOSS_TTS_ID && provider.name == "Moss TTS"
+            }
+            if (mossIndex >= 0) {
+                ttsProviders[mossIndex] = ttsProviders[mossIndex].copyProvider(name = "哄睡daddy")
+            }
             it.copy(
                 providers = providers,
                 assistants = assistants,
@@ -799,9 +807,14 @@ val DEFAULT_SYSTEM_TTS_ID = Uuid.parse("026a01a2-c3a0-4fd5-8075-80e03bdef200")
  * - 用固定 Uuid 让「缺哪个补哪个」的内置补全逻辑（见本文件加载时的
  *   DEFAULT_TTS_PROVIDERS.forEach）对老用户升级也能生效，且不会重复插入。
  * - voice 是 Moss 音色库的 voice_id（`voice` 是 `voice_id` 的兼容别名，已实测）。
- * - 换默认音色 = 改这里 voice 字段，或复制一份条目改成别的 voice_id。
+ * - 每个内置音色一条固定 Uuid 的条目；新增内置音色 = 照抄一条改 voice_id 与名字。
+ *   设置页顶部的圆形试听图标（见 SettingSpeechPage）按「baseUrl 与 FlowBee 中转站
+ *   同源」识别内置音色，新加的会自动出现在那一排。
  */
 val DEFAULT_MOSS_TTS_ID = Uuid.parse("6f1d2c4e-8a3b-4f5c-9d7e-2b4a6c8d0e1f")
+
+/** 第二个内置音色「冷静理性温柔帅哥」的固定 Uuid。 */
+val DEFAULT_COOL_TTS_ID = Uuid.parse("39099106-049c-43ec-b8bd-0519afb4ce50")
 
 private val DEFAULT_TTS_PROVIDERS = listOf(
     TTSProviderSetting.SystemTTS(
@@ -810,11 +823,19 @@ private val DEFAULT_TTS_PROVIDERS = listOf(
     ),
     TTSProviderSetting.OpenAI(
         id = DEFAULT_MOSS_TTS_ID,
-        name = "Moss TTS",
+        name = "哄睡daddy",
         apiKey = "",
         baseUrl = "https://flowbee.top/v1",
         model = "moss-tts-1.5-flash",
         voice = "187b0c9b-612c-4019-98fe-c7bb59eb8074",
+    ),
+    TTSProviderSetting.OpenAI(
+        id = DEFAULT_COOL_TTS_ID,
+        name = "冷静理性温柔帅哥",
+        apiKey = "",
+        baseUrl = "https://flowbee.top/v1",
+        model = "moss-tts-1.5-flash",
+        voice = "b1dde58c-3610-460e-b318-af08821dcfc6",
     ),
 )
 
