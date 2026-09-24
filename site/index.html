@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Flowbee Chat：更顺手的本地 AI 对话客户端，连接 Flowbee API，支持语音、回溯与分支。" />
+    <title>Flowbee Chat · 和 AI 聊得更尽兴</title>
+    <link rel="icon" href="./favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <link rel="preload" as="font" type="font/woff2" href="./fonts/manrope-latin-700-normal.woff2" crossorigin />
+    <link rel="stylesheet" href="./fonts.css" />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./brand-overrides.css" />
+  </head>
+  <body>
+    <div class="noise"></div>
+    <header class="nav shell">
+      <a class="brand" href="#top"><span class="brand-mark">F</span><span>flowbee<span class="brand-dim">/chat</span></span></a>
+      <nav><a href="#advantages">为什么是它</a><a href="#features">能力</a><a href="#download">下载</a></nav>
+      <a class="nav-download" href="https://flowbee.top" target="_blank" rel="noopener">Flowbee API <span>↗</span></a>
+    </header>
+
+    <main id="top">
+      <section class="hero shell">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="pulse"></span> FLOWBEE CHAT · 给喜欢聊天的人</p>
+          <h1>和喜欢的角色<br /><em>聊到尽兴。</em></h1>
+          <p class="hero-lede">给 AI 聊天玩家准备的客户端。写角色、玩剧情、接着昨天的故事继续聊，让每一次回应都更像你想要的那样。</p>
+          <div class="hero-actions"><a class="button button-primary" href="#download">下载 Flowbee Chat <span>↓</span></a><a class="text-link" href="#features">看看有什么好玩的 <span>→</span></a></div>
+          <div class="hero-meta"><img class="app-icon" src="./app-icon.png" alt="Flowbee Chat 图标" /><span>Android / Windows</span><span class="meta-dot"></span><span>免费额度开聊</span><span class="meta-dot"></span><span>把故事留在手里</span></div>
+        </div>
+        <div class="hero-stage">
+          <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+          <div class="chat-window" id="chatDemo">
+            <div class="window-bar"><span class="window-title"><span class="mini-logo">F</span> 新对话</span><span class="window-actions">···</span></div>
+            <div class="chat-body">
+              <div class="chat-context"><span class="context-chip active">Expert · deepseek-v4-pro</span><span class="context-chip">联网</span><span class="context-time">刚刚</span></div>
+              <div class="bubble user-bubble">如果我们今晚逃出城堡，你会带我去哪里？</div>
+              <div class="assistant-row"><span class="assistant-avatar">F</span><div class="bubble assistant-bubble">去看海。别担心，我已经把马车藏在月光照不到的地方了。</div></div>
+              <div class="thinking"><span></span><span></span><span></span><small>正在整理思路</small></div>
+              <div class="chat-tools"><button class="tool active">⌁ <span>回溯</span></button><button class="tool">⑂ <span>开分支</span></button><button class="tool">◉ <span>语音</span></button><span class="tool-hint">← 每一步都可回到这里</span></div>
+            </div>
+          </div>
+          <div class="float-card voice-card"><span class="float-icon">◉</span><div><strong>语音适配</strong><small>说出来，马上继续</small></div><span class="voice-wave"><i></i><i></i><i></i><i></i><i></i></span></div>
+          <div class="float-card branch-card"><span class="branch-line"></span><div><strong>分支已创建</strong><small>探索另一种答案</small></div></div>
+        </div>
+      </section>
+
+      <section class="ticker"><div class="ticker-track"><span>FLOWBEE API</span><b>✦</b><span>VOICE CHAT</span><b>✦</b><span>聊天回溯</span><b>✦</b><span>多个模型一个入口</span><b>✦</b><span>FLOWBEE API</span><b>✦</b><span>VOICE CHAT</span></div></section>
+
+      <section class="advantages shell" id="advantages"><div class="section-intro"><p class="eyebrow">01 / 为什么聊天玩家会喜欢</p><h2>不用为聊天<br /><span>一直心疼价格。</span></h2></div><div class="advantage-grid"><article class="advantage-main"><div class="number">01</div><h3>免费额度 +<br />补贴额度。</h3><p>市面上的 AI 聊天软件越来越贵，角色聊到一半还要考虑余额。Flowbee API 提供免费和补贴额度，先把故事聊下去。</p><div class="api-line"><span class="api-dot"></span><span>flowbee.top / 一处入口</span><a class="api-status" href="https://flowbee.top" target="_blank" rel="noopener">去看看 ↗</a></div></article><article class="advantage-side"><div class="number">02</div><h3>DeepSeek 更新了，<br /><strong>喜欢的模式还在。</strong></h3><p>专家模式和快速模式继续保留：deepseek-v4-pro、deepseek-v4-flash，还有旧版 deepseek-v3.2。也可以使用 Gemini、Claude、GPT。</p><div class="model-list"><span>专家模式</span><span>快速模式</span><span>v3.2</span><span>Gemini</span><span>Claude</span><span>GPT</span></div></article></div></section>
+
+      <section class="features shell" id="features"><div class="section-intro split-intro"><div><p class="eyebrow">02 / 为角色扮演准备的能力</p><h2>让故事继续，<br /><span>让角色活起来。</span></h2></div><p>回溯、分支和语音，都是为了让你更沉浸地和喜欢的角色待在一起。</p></div><div class="feature-grid"><article class="feature-card feature-large"><div class="feature-top"><span class="feature-index">A /</span><span class="feature-icon">◉</span></div><h3>让角色开口说话</h3><p>不用盯着屏幕，也能听见角色把这一句说给你。语音陪伴，让每个角色更有自己的声音。</p><div class="voice-demo"><span class="voice-label">角色正在说话</span><div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span class="voice-time">正在播放</span></div></article><article class="feature-card"><div class="feature-top"><span class="feature-index">B /</span><span class="feature-icon">⑂</span></div><h3>一条消息，走向不同剧情</h3><p>想看看另一种发展？从任意一句开出新分支；聊偏了，也能回到上一句重新选择。</p><div class="branch-demo"><div class="branch-node root">月光下的城门</div><span class="branch-connector"></span><div class="branch-node active">一起逃走</div><div class="branch-node">留下来</div></div></article><article class="feature-card"><div class="feature-top"><span class="feature-index">C /</span><span class="feature-icon">↥</span></div><h3>带上你已有的故事</h3><p>支持导入 DeepSeek、Chatbox、RikkaHub 聊天记录。熟悉的角色和上下文，不用重新开始。</p><div class="import-file"><span class="file-icon">IMPORT</span><div><strong>选择你的聊天记录</strong><small>DeepSeek · Chatbox · RikkaHub</small></div><span class="check">✓</span></div></article></div></section>
+
+      <section class="modes shell"><div class="modes-copy"><p class="eyebrow">03 / Flowbee API 在客户端里</p><h2>额度、模型和连接，<br /><span>一眼就能管理。</span></h2><p>不用在网页和软件之间来回切换。在 Flowbee Chat 里查看余额、管理 API，随时知道还能和角色聊多久。</p></div><div class="mode-switcher api-dashboard"><div class="balance-row"><span class="output-label">FLOWBEE 余额</span><strong>¥ 18.60</strong><span class="balance-trend">本月已节省 72%</span></div><div class="api-dashboard-line"><span class="api-dashboard-dot"></span><span>Flowbee API 已连接</span><span class="api-dashboard-link">管理 API ↗</span></div><div class="api-dashboard-models"><span>专家模式 · v4-pro</span><span>快速模式 · v4-flash</span><span>+ 5 个模型可用</span></div><div class="mode-output"><span class="output-label">今日对话</span><span>还可以继续聊很久</span><span class="output-dot"></span></div></div></section>
+
+      <section class="download shell" id="download"><div class="download-panel"><div class="download-copy"><p class="eyebrow">04 / 从这里开始</p><h2>把你的下一次<br /><em>好对话</em> 留下来。</h2><p>下载 Flowbee Chat，连接 Flowbee API，今天就开始。</p><a class="button button-primary" href="/download" id="downloadButton" rel="noopener">下载客户端 <span>↓</span></a><small class="download-note" id="downloadNote">Android · arm64-v8a 安装包</small></div><div class="download-art"><div class="art-grid"></div><div class="art-card"><span class="art-logo">F</span><span>FLOWBEE<br /><b>CHAT</b></span><span class="art-version">v1.0</span></div></div></div></section>
+    </main>
+    <footer class="footer shell"><span>© 2026 flowbee/chat</span><span>Built for thoughtful conversations.</span><a href="#top">回到顶部 ↑</a></footer>
+    <script src="./vendor/gsap.min.js"></script>
+    <script src="./vendor/ScrollTrigger.min.js"></script>
+    <script src="./script.js"></script>
+  </body>
+</html>

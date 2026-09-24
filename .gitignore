@@ -23,3 +23,8 @@ app/app.key
 # 注：app/google-services.json 是特意提交的占位配置，不在此忽略。
 # Google 官方说明该文件不属于机密，它本身就会被打进 APK；
 # 以后换成真配置直接用真文件覆盖即可。
+
+# ——— 落地页（site/）：源码进库，wrangler 本地缓存不进 ———
+# .wrangler/ 里存的是本机 Cloudflare 账号 ID 与项目缓存，属于本地状态，
+# 提交上去既没意义也会把账号信息带进版本库。
+site/.wrangler/

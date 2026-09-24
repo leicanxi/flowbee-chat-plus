@@ -1,0 +1,10 @@
+# 字体与第三方 JS 都带内容指纹式的版本路径，可以放心长缓存。
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/vendor/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# 页面本身要跟着发版走，别让边缘缓存住旧 HTML。
+/
+  Cache-Control: public, max-age=60, must-revalidate
