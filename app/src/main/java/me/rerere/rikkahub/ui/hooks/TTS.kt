@@ -293,6 +293,8 @@ private fun TTSProviderSetting.withFlowBeeApiKeyFallback(
             if (shouldFill(apiKey, baseUrl)) copy(apiKey = flowBeeKey) else this
         is TTSProviderSetting.FishAudio ->
             if (shouldFill(apiKey, baseUrl)) copy(apiKey = flowBeeKey) else this
+        is TTSProviderSetting.Volcengine ->
+            if (shouldFill(apiKey, baseUrl)) copy(apiKey = flowBeeKey) else this
         // 系统 TTS 不联网，没有密钥可说。
         is TTSProviderSetting.SystemTTS -> this
     }
@@ -347,6 +349,7 @@ private val TTSProviderSetting.apiKeyOrEmpty: String
         is TTSProviderSetting.ElevenLabs -> apiKey
         is TTSProviderSetting.Step -> apiKey
         is TTSProviderSetting.FishAudio -> apiKey
+        is TTSProviderSetting.Volcengine -> apiKey
         is TTSProviderSetting.SystemTTS -> ""
     }
 
@@ -362,5 +365,6 @@ private val TTSProviderSetting.baseUrlOrEmpty: String
         is TTSProviderSetting.ElevenLabs -> baseUrl
         is TTSProviderSetting.Step -> baseUrl
         is TTSProviderSetting.FishAudio -> baseUrl
+        is TTSProviderSetting.Volcengine -> baseUrl
         is TTSProviderSetting.SystemTTS -> ""
     }
