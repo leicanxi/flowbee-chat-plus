@@ -107,6 +107,19 @@ aws_s3 s3 cp "$APK_FILE" "s3://$R2_BUCKET/$APK_KEY" \
   --content-type "application/vnd.android.package-archive" \
   --cache-control "public, max-age=31536000, immutable"
 
+# ——— 固定入口：同一份包另存一份 app/latest.apk ———
+# 版本包的文件名带版本号，每次发版都变，官网/落地页/公众号贴的链接没法跟着变。
+# latest.apk 永远指向刚发布的这一版，页面只要写死它，以后发版不用再改页面。
+# ⚠️ 这里**绝不能沿用 immutable**：latest.apk 的内容每次发版都换，
+#    长缓存会让用户一直下到旧包，而且他们自己清不掉，只能干等缓存过期。
+LATEST_KEY="app/latest.apk"
+LATEST_URL="$R2_PUBLIC_BASE/$LATEST_KEY"
+echo "==> 上传固定入口：$LATEST_KEY"
+aws_s3 s3 cp "$APK_FILE" "s3://$R2_BUCKET/$LATEST_KEY" \
+  --checksum-algorithm CRC32 \
+  --content-type "application/vnd.android.package-archive" \
+  --cache-control "public, max-age=60"
+
 APK_BYTES="$(stat -c%s "$APK_FILE" 2>/dev/null || stat -f%z "$APK_FILE")"
 APK_SIZE="$(awk -v b="$APK_BYTES" 'BEGIN { printf "%.2f MB", b/1048576 }')"
 PUBLISHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -153,7 +166,7 @@ command rm -f "$BODY_FILE"
 
 # ——— 只保留最近 $KEEP_APK 个安装包，旧的删掉，避免存储无限堆积 ———
 echo "==> 清理旧安装包（保留最近 $KEEP_APK 个）"
-LIST="$(aws_s3 s3 ls "s3://$R2_BUCKET/app/" | grep -E '\.apk$' | sort || true)"
+LIST="$(aws_s3 s3 ls "s3://$R2_BUCKET/app/" | grep -E '\.apk$' | grep -v 'latest\.apk$' | sort || true)"
 TO_DELETE="$(printf '%s\n' "$LIST" | grep -v '^[[:space:]]*$' | head -n "-$KEEP_APK" || true)"
 if [ -n "${TO_DELETE//[[:space:]]/}" ]; then
   while IFS= read -r line; do
