@@ -678,7 +678,14 @@ data class BackupReminderConfig(
     val lastBackupTime: Long = 0L,
 )
 
-fun Settings.isNotConfigured() = providers.all { it.models.isEmpty() }
+/**
+ * 是否「一点都没配」——用来决定设置页顶部那张「请配置 API 和模型」的红卡要不要出现。
+ *
+ * 填过密钥的提供商（[hasUserKey]）也算配过：那种情况是**已经连上、只是模型还没拉回来**
+ * （比如 FlowBee 连接成功但模型导入失败），对着一个刚连上的用户说「你还没配置 API」
+ * 是自相矛盾的；模型导入的状态由设置页的 FlowBee 卡片自己说明。
+ */
+fun Settings.isNotConfigured() = providers.all { it.models.isEmpty() && !it.hasUserKey }
 
 fun Settings.findModelById(uuid: Uuid?, fallback: Uuid? = null): Model? {
     if (uuid == null && fallback == null) return null

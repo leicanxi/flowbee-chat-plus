@@ -1,7 +1,6 @@
 package me.rerere.rikkahub.ui.pages.chat
 
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -43,7 +43,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -108,6 +107,11 @@ fun ChatDrawerContent(
     vm: ChatVM,
     settings: Settings,
     current: Conversation,
+    /**
+     * 大屏（`PermanentNavigationDrawer`）下抽屉和对话页在一个 Row 里排布。
+     * 这时抽屉必须自己限定宽度 —— 铺满屏幕会把对话页挤成 0 宽。
+     */
+    permanent: Boolean = false,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -171,17 +175,26 @@ fun ChatDrawerContent(
     // 更新详情弹窗：只在用户点 badge 时才打开，不再在侧边栏里平铺 changelog
     var showUpdateDetail by remember { mutableStateOf(false) }
 
-    // fillMaxSize + 透明容器色 + RectangleShape：抽屉铺满整个屏幕，
+    // fillMaxSize + RectangleShape：抽屉铺满整个屏幕，
     // 不再有 300dp 宽度限制，也不再露出右端的圆角。
+    //
+    // 底色必须刷在 Sheet 自己身上（drawerContainerColor），不能设成透明再让内容 Column 自己画：
+    // M3 会给抽屉内容的 Column 加 windowInsetsPadding(Vertical + Start) 来让开状态栏和小横条，
+    // 于是那张内层 Column 只覆盖「安全区」，状态栏和小横条那两条永远露在抽屉外面
+    // （透出下面的遮罩和对话页）。刷在 Sheet 上则是整屏铺满，内容照样在安全区里。
+    //
+    // 顺带修掉深色模式下侧边栏文字发黑：`contentColorFor(Color.Transparent)` 得到
+    // Color.Unspecified，ModalDrawerSheet 会把它当成 LocalContentColor 传下去，
+    // 于是没自带 Surface 的文字（昵称、问候语、会话标题）都退回 Paint 默认的黑色。
+    // 用 surface 时 M3 会推出 onSurface，深浅色都对。
     ModalDrawerSheet(
-        modifier = Modifier.fillMaxSize(),
-        drawerContainerColor = Color.Transparent,
+        modifier = if (permanent) Modifier.width(300.dp) else Modifier.fillMaxSize(),
+        drawerContainerColor = MaterialTheme.colorScheme.surface,
         drawerShape = RectangleShape,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface)
                 .padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -727,65 +740,45 @@ private fun updateInfo(vm: ChatVM): UpdateInfo? {
 @Composable
 private fun DrawerActions(navController: Navigator) {
     Column {
-        // 搜索入口
-        Surface(
+        // 搜索 / 历史这两个入口不套卡片：抽屉本身已经是一整块 surface 底色，
+        // 再叠一层 surfaceContainerLow 只是多一道道几乎看不见的色块。只留图标 + 文字。
+        DrawerEntry(
+            icon = HugeIcons.Search01,
+            label = stringResource(R.string.chat_page_search_chats),
             onClick = { navController.navigate(Screen.MessageSearch) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-            shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Icon(
-                    imageVector = HugeIcons.Search01,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = stringResource(R.string.chat_page_search_chats),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-        }
-
-        // 历史记录入口
-        Surface(
+        )
+        DrawerEntry(
+            icon = HugeIcons.TransactionHistory,
+            label = stringResource(R.string.chat_page_history),
             onClick = { navController.navigate(Screen.History) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-            shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Icon(
-                    imageVector = HugeIcons.TransactionHistory,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = stringResource(R.string.chat_page_history),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-        }
+        )
+    }
+}
+
+@Composable
+private fun DrawerEntry(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
 }
 

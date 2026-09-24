@@ -178,20 +178,17 @@ private fun DateHeaderItem(
     label: String,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    // 日期分组（今天 / 昨天 …）只留一行文字，不再铺 surfaceContainerLow 底色：
+    // 抽屉底已经是 surface，这条色块除了把列表切得更碎没有别的作用。
+    Text(
+        text = label,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.primary,
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-    }
+    )
 }
 
 @Composable
@@ -201,7 +198,6 @@ private fun PinnedHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

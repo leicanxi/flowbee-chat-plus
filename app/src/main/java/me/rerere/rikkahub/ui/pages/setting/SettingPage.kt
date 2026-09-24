@@ -252,7 +252,10 @@ private fun SettingPageContent(
             contentPadding = innerPadding + PaddingValues(8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            if (settings.isNotConfigured()) {
+            // `settings.init` 是「还没从 DataStore 读出真实设置」的占位对象（providers 是空的，
+            // `all {}` 对空列表恒为 true）。不排除它的话，每次进设置页都会先闪一张
+            // 「请配置 API 和模型」的红卡，哪怕是已经配好的老用户。
+            if (!settings.init && settings.isNotConfigured()) {
                 item {
                     ProviderConfigWarningCard(
                         flowBeeAvailable = flowBeeAvailable,
@@ -915,7 +918,8 @@ private fun SettingPagePreview() {
             LocalNavController provides remember { Navigator(mutableListOf()) }
         ) {
             SettingPageContent(
-                settings = Settings.dummy(),
+                // 关掉 init：预览要看的是「全新未配置」的真实排版，包括那张红卡。
+                settings = Settings.dummy().copy(init = false),
                 colorMode = ColorMode.SYSTEM,
                 flowBeeHasKey = false,
                 flowBeeAvailable = true,
