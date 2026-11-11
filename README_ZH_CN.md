@@ -27,7 +27,7 @@
 
 ## 💖 赞助
 
-欢迎支持 FlowBee Chat 的開發與維護：<https://flowbee.top/sponsors>
+欢迎支持 FlowBee Chat 的开发与维护：<https://flowbee.top/sponsors>
 ## ✨ 功能特色
 
 - 🎨 现代化安卓APP设计（Material 3 Expressive / 预测性返回）
