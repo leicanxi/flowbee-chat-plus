@@ -306,9 +306,7 @@
   <string name="deep_thinking">Tiefes Denken</string>
   <string name="deep_thinking_seconds">%1$.1f Sekunden nachgedacht</string>
   <string name="delete">Löschen</string>
-  <string name="donate_page_afdian_desc">Für 🇨🇳 Nutzer</string>
   <string name="donate_page_donation_methods">Spendenmethoden</string>
-  <string name="donate_page_kofi_desc">Für internationale Nutzer</string>
   <string name="donate_page_sponsor_list">Sponsorenliste</string>
   <string name="extension_selector_lorebooks_empty">Keine Lorebooks verfügbar</string>
   <string name="extension_selector_mode_injections_empty">Keine Modus-Injektionen verfügbar</string>
@@ -647,7 +645,6 @@
   <string name="regenerate">Neu generieren</string>
   <string name="regenerate_confirm_message">Bist du sicher, dass du diese Nachricht neu generieren möchtest? Alle Nachrichten unterhalb dieser Nachricht werden gelöscht.</string>
   <string name="render_with_webview">Mit WebView rendern</string>
-  <string name="rikkahub_provider_description">Offizieller kostenloser KI-Dienst, der mit Sponsorengeldern der Nutzer einige kostenlose Modelle als Fallback für neue Nutzer bereitstellt. Kein API-Schlüssel erforderlich. Es gelten strenge Ratenlimits; wenn du einen eigenen Anbieter erworben hast, nutze bitte möglichst deinen eigenen Anbieter.</string>
   <string name="safe_mode_assistants">Assistenten</string>
   <string name="menu_page_night_greeting">Es ist spät, pass auf dich auf\uD83D\uDC4B</string>
   <string name="mermaid_export">Export</string>
@@ -1094,7 +1091,6 @@
   <string name="tts">TTS</string>
   <string name="unpin_chat">Chat loslösen</string>
   <string name="update_card_check_failed">Updateprüfung fehlgeschlagen</string>
-  <string name="update_card_close">Schließen</string>
   <string name="update_card_downloading">Wird heruntergeladen, den Fortschritt findest du in der Statusleiste</string>
   <string name="update_card_new_version_found">Neue Version gefunden: %s</string>
   <string name="update_card_unknown_error">Unbekannter Fehler</string>

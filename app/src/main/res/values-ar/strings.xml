@@ -390,9 +390,7 @@
   <string name="deep_thinking">التفكير العميق</string>
   <string name="deep_thinking_seconds">فكّر لمدة %1$.1f ثانية</string>
   <string name="delete">حذف</string>
-  <string name="donate_page_afdian_desc">للمستخدمين في الصين 🇨🇳</string>
   <string name="donate_page_donation_methods">طرق التبرع</string>
-  <string name="donate_page_kofi_desc">للمستخدمين حول العالم</string>
   <string name="donate_page_sponsor_list">قائمة الرعاة</string>
   <string name="donate_page_title">تبرع</string>
   <string name="edit">تعديل</string>
@@ -632,7 +630,6 @@
   <string name="regenerate">إعادة التوليد</string>
   <string name="regenerate_confirm_message">هل أنت متأكد من إعادة توليد هذه الرسالة؟ سيتم حذف جميع الرسائل أسفل هذه الرسالة.</string>
   <string name="render_with_webview">العرض باستخدام WebView</string>
-  <string name="rikkahub_provider_description">خدمة ذكاء اصطناعي رسمية مجانية، تستخدم أموال رعاية المستخدمين لتوفير بعض النماذج المجانية للمستخدمين الجدد كخيار احتياطي، دون الحاجة إلى مفتاح API. لديها حدود صارمة على معدل الطلبات، وإذا كنت قد اشتريت مزوّدك الخاص، فيرجى استخدام مزوّدك الخاص قدر الإمكان.</string>
   <string name="safe_mode_assistants">المساعدون</string>
   <string name="safe_mode_copy">نسخ</string>
   <string name="safe_mode_crash_report">تقرير التعطل</string>
@@ -1284,7 +1281,6 @@
   <string name="tts">TTS</string>
   <string name="unpin_chat">إلغاء تثبيت الدردشة</string>
   <string name="update_card_check_failed">فشل التحقق من التحديث</string>
-  <string name="update_card_close">إغلاق</string>
   <string name="update_card_downloading">جارٍ التنزيل، يرجى التحقق من شريط الحالة لمتابعة التقدم</string>
   <string name="update_card_new_version_found">تم العثور على إصدار جديد %s</string>
   <string name="update_card_unknown_error">خطأ غير معروف</string>
