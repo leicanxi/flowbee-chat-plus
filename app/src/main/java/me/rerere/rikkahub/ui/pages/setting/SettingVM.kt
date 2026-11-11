@@ -64,12 +64,22 @@ class SettingVM(
     private val providerManager: ProviderManager,
 ) :
     ViewModel() {
+    // 设置在应用启动时就读进了内存，初始值直接取当前值；
+    // 用占位值的话，每次进设置页第一帧都是默认设置，随后才跳成真实数据
     val settings: StateFlow<Settings> = settingsStore.settingsFlow
-        .stateIn(viewModelScope, SharingStarted.Lazily, Settings(init = true, providers = emptyList()))
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Lazily,
+            initialValue = settingsStore.settingsFlow.value.takeUnless { it.init }
+                ?: Settings(init = true, providers = emptyList()),
+        )
 
-    fun updateSettings(settings: Settings) {
+    val launchCount: StateFlow<Int> = settingsStore.launchCountFlow
+        .stateIn(viewModelScope, SharingStarted.Lazily, 0)
+
+    fun updateSettings(fn: (Settings) -> Settings) {
         viewModelScope.launch {
-            settingsStore.update(settings)
+            settingsStore.update(fn)
         }
     }
 
@@ -133,9 +143,7 @@ class SettingVM(
                     val key = FlowBeeDefaults.normalizeKey(candidateKey)
                     // store.update 会同步更新内存里的 settingsFlow，所以下面这次写入
                     // 之后 importFlowBeeModels 读到的已经是带新密钥的最新值。
-                    settingsStore.update(
-                        settingsStore.settingsFlow.value.withFlowBee(key = key, imported = emptyList())
-                    )
+                    settingsStore.update { it.withFlowBee(key = key, imported = emptyList()) }
                     _keyCheck.value = FlowBeeKeyCheck.Idle
                     _keyDialogVisible.value = false
                     importFlowBeeModels(key)
@@ -188,7 +196,7 @@ class SettingVM(
         viewModelScope.launch {
             val current = settingsStore.settingsFlow.value
             val model = current.flowBeeModels().pickDefaultChatModel() ?: return@launch
-            settingsStore.update(current.copy(chatModelId = model.id))
+            settingsStore.update { it.copy(chatModelId = model.id) }
         }
     }
 
@@ -201,7 +209,7 @@ class SettingVM(
         viewModelScope.launch {
             val current = settingsStore.settingsFlow.value
             if (!current.flowBeeDefaultHintDismissed) {
-                settingsStore.update(current.copy(flowBeeDefaultHintDismissed = true))
+                settingsStore.update { it.copy(flowBeeDefaultHintDismissed = true) }
             }
         }
     }
@@ -221,7 +229,7 @@ class SettingVM(
         val current = settingsStore.settingsFlow.value
         val updated = current.withFlowBee(key = null, imported = remote)
         if (updated.flowBeeModels() != current.flowBeeModels()) {
-            settingsStore.update(updated)
+            settingsStore.update { updated }
         }
         _modelImport.value = FlowBeeModelImport.Idle
     }

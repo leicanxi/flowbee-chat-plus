@@ -8,7 +8,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
-import me.rerere.ai.provider.BalanceOption
+import me.rerere.ai.provider.QuotaQuery
 import me.rerere.ai.provider.ProviderSetting
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.data.flowbee.FlowBeeDefaults
@@ -41,12 +41,11 @@ val REMOVED_BUILT_IN_PROVIDER_IDS: Set<Uuid> = setOf(
     Uuid.parse("afbc54ad-807e-4455-9594-7d7a546356ad"), // MaruCode
 )
 
-/** 该提供商是否已被用户配置过（填过密钥）。 */
+/** 该提供商是否已被用户配置过（填过密钥 / 登录过账号）。 */
 val ProviderSetting.hasUserKey: Boolean
     get() = when (this) {
-        is ProviderSetting.OpenAI -> apiKey.isNotBlank()
-        is ProviderSetting.Google -> apiKey.isNotBlank()
-        is ProviderSetting.Claude -> apiKey.isNotBlank()
+        is ProviderSetting.ApiKey -> apiKey.isNotBlank()
+        is ProviderSetting.Account -> credential != null
     }
 
 val DEFAULT_PROVIDERS = listOf(
@@ -68,9 +67,9 @@ val DEFAULT_PROVIDERS = listOf(
         //   这里只是详情页的一行数字，按当前配置写死即可。
         // - 表达式语言没有兜底语法，响应里缺 `user_quota` 时会静默求值成 0.00（见 JsonExpression），
         //   也就是**站点要先部署这个字段**，否则详情页会显示成没钱。
-        balanceOption = BalanceOption(
+        quotaQuery = QuotaQuery(
             enabled = true,
-            apiPath = FlowBeeDefaults.TOKEN_USAGE_URL,
+            url = FlowBeeDefaults.TOKEN_USAGE_URL,
             resultPath = "data.user_quota / 500000",
         ),
         description = {
@@ -126,10 +125,10 @@ val DEFAULT_PROVIDERS = listOf(
         baseUrl = "https://api.deepseek.com/v1",
         apiKey = "",
         builtIn = true,
-        balanceOption = BalanceOption(
+        quotaQuery = QuotaQuery(
             enabled = true,
-            apiPath = "/user/balance",
-            resultPath = "balance_infos[0].total_balance"
+            url = "{{baseUrl}}/user/balance",
+            resultPath = "balance_infos[0].total_balance",
         )
     ),
     ProviderSetting.OpenAI(
@@ -139,10 +138,10 @@ val DEFAULT_PROVIDERS = listOf(
         apiKey = "",
         enabled = true,
         builtIn = true,
-        balanceOption = BalanceOption(
+        quotaQuery = QuotaQuery(
             enabled = true,
-            apiPath = "/users/me/balance",
-            resultPath = "data.available_balance"
+            url = "{{baseUrl}}/users/me/balance",
+            resultPath = "data.available_balance",
         )
     ),
     ProviderSetting.OpenAI(
@@ -151,9 +150,9 @@ val DEFAULT_PROVIDERS = listOf(
         baseUrl = "https://openrouter.ai/api/v1",
         apiKey = "",
         builtIn = true,
-        balanceOption = BalanceOption(
+        quotaQuery = QuotaQuery(
             enabled = true,
-            apiPath = "/credits",
+            url = "{{baseUrl}}/credits",
             resultPath = "data.total_credits - data.total_usage",
         )
     ),
@@ -164,9 +163,9 @@ val DEFAULT_PROVIDERS = listOf(
         apiKey = "",
         enabled = false,
         builtIn = true,
-        balanceOption = BalanceOption(
+        quotaQuery = QuotaQuery(
             enabled = true,
-            apiPath = "/credits",
+            url = "{{baseUrl}}/credits",
             resultPath = "balance",
         )
     ),

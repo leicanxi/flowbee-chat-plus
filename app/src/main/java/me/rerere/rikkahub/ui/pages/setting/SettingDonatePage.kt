@@ -36,7 +36,7 @@ import me.rerere.hugeicons.stroke.HeartHandshake
 import me.rerere.hugeicons.stroke.UserCircle
 import me.rerere.rikkahub.R
 import me.rerere.rikkahub.Screen
-import me.rerere.rikkahub.data.api.SponsorAPI
+import me.rerere.rikkahub.data.remote.SponsorAPI
 import me.rerere.rikkahub.data.flowbee.FlowBeeDefaults
 import me.rerere.rikkahub.data.model.Sponsor
 import me.rerere.rikkahub.data.model.SponsorBadge

@@ -110,20 +110,20 @@ fun SettingSpeechPage(vm: SettingVM = koinViewModel()) {
                 actions = {
                     if (selectedPage == 0) {
                         AddTTSProviderButton {
-                            vm.updateSettings(
-                                settings.copy(
-                                    ttsProviders = listOf(it) + settings.ttsProviders
+                            vm.updateSettings { s ->
+                                s.copy(
+                                    ttsProviders = listOf(it) + s.ttsProviders
                                 )
-                            )
+                            }
                         }
                     } else {
                         AddASRProviderButton {
-                            vm.updateSettings(
-                                settings.copy(
-                                    asrProviders = listOf(it) + settings.asrProviders,
-                                    selectedASRProviderId = settings.selectedASRProviderId ?: it.id
+                            vm.updateSettings { s ->
+                                s.copy(
+                                    asrProviders = listOf(it) + s.asrProviders,
+                                    selectedASRProviderId = s.selectedASRProviderId ?: it.id
                                 )
-                            )
+                            }
                         }
                     }
                 },
@@ -156,7 +156,7 @@ fun SettingSpeechPage(vm: SettingVM = koinViewModel()) {
             0 -> Column(modifier = Modifier.padding(innerPadding)) {
                 TTSProviderList(
                     settings = settings,
-                    onUpdateSettings = vm::updateSettings,
+                    onUpdateSettings = { newSettings -> vm.updateSettings { newSettings } },
                     onEdit = { editingTTSProvider = it },
                     modifier = Modifier.weight(1f),
                 )
@@ -164,7 +164,7 @@ fun SettingSpeechPage(vm: SettingVM = koinViewModel()) {
 
             1 -> ASRProviderList(
                 settings = settings,
-                onUpdateSettings = vm::updateSettings,
+                onUpdateSettings = { newSettings -> vm.updateSettings { newSettings } },
                 onEdit = { editingASRProvider = it },
                 modifier = Modifier.padding(innerPadding)
             )
@@ -223,7 +223,7 @@ fun SettingSpeechPage(vm: SettingVM = koinViewModel()) {
                             val newProviders = settings.ttsProviders.map {
                                 if (it.id == provider.id) currentProvider else it
                             }
-                            vm.updateSettings(settings.copy(ttsProviders = newProviders))
+                            vm.updateSettings { it.copy(ttsProviders = newProviders) }
                             editingTTSProvider = null
                         },
                         modifier = Modifier.weight(1f)
@@ -286,7 +286,7 @@ fun SettingSpeechPage(vm: SettingVM = koinViewModel()) {
                             val newProviders = settings.asrProviders.map {
                                 if (it.id == provider.id) currentProvider else it
                             }
-                            vm.updateSettings(settings.copy(asrProviders = newProviders))
+                            vm.updateSettings { it.copy(asrProviders = newProviders) }
                             editingASRProvider = null
                         },
                         modifier = Modifier.weight(1f)

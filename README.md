@@ -142,6 +142,10 @@ cd flowbee-chat-plus
 - **上下文裁剪**：按消息数量阶梯式裁剪历史，优先保留系统提示、记忆与最近工具结果。
 - **可恢复生成**：生成过程是可取消的 Job，取消或进程中断后能补齐未完成的工具调用。
 
+## 💖 Sponsors
+
+Support FlowBee Chat: <https://flowbee.top/sponsors>
+
 ## 与上游的关系
 
 - 上游：[rikkahub/rikkahub](https://github.com/rikkahub/rikkahub)

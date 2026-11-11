@@ -77,14 +77,6 @@ private const val ORBIT_DWELL = 0.14f
 
 @Composable
 fun AppIconLoadingIndicator(modifier: Modifier = Modifier) {
-    val useAppIconStyleLoadingIndicator =
-        LocalSettings.current.displaySetting.useAppIconStyleLoadingIndicator
-
-    if (!useAppIconStyleLoadingIndicator) {
-        ContainedLoadingIndicator(modifier = modifier)
-        return
-    }
-
     val transition = rememberInfiniteTransition(label = "flowBeeLoading")
     val phase by transition.animateFloat(
         initialValue = 0f,

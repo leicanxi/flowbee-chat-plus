@@ -7,7 +7,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
-import me.rerere.ai.provider.BalanceOption
+import me.rerere.ai.provider.QuotaQuery
 import me.rerere.ai.provider.ProviderSetting
 
 /**
@@ -23,9 +23,9 @@ val RECOMMENDED_PROVIDERS: List<ProviderSetting> = listOf(
         baseUrl = "https://flowbee.top/v1",
         apiKey = "",
         enabled = true,
-        balanceOption = BalanceOption(
+        quotaQuery = QuotaQuery(
             enabled = true,
-            apiPath = "/api/usage/token/",
+            url = "{{baseUrl}}/api/usage/token/",
             resultPath = "data.total_available / 500000",
         ),
         description = {

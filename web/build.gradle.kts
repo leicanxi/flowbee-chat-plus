@@ -90,8 +90,6 @@ if (!webUiBuilt) {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
 
     // ktor server
     implementation(libs.ktor.server.default.headers)
@@ -99,7 +97,6 @@ dependencies {
     implementation(libs.ktor.server.compression)
     implementation(libs.ktor.server.cors)
     api(libs.ktor.server.auth)
-    api(libs.ktor.server.auth.jwt)
     api(libs.ktor.server.core)
     implementation(libs.ktor.server.host.common)
     api(libs.ktor.server.content.negotiation)

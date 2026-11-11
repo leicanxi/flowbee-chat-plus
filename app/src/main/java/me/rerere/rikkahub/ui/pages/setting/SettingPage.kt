@@ -71,6 +71,7 @@ import me.rerere.hugeicons.stroke.Brain02
 import me.rerere.hugeicons.stroke.Clapping01
 import me.rerere.hugeicons.stroke.Database02
 import me.rerere.hugeicons.stroke.GlobalSearch
+import me.rerere.hugeicons.stroke.Image02
 import me.rerere.hugeicons.stroke.ImageUpload
 import me.rerere.hugeicons.stroke.InLove
 import me.rerere.hugeicons.stroke.InformationCircle
@@ -82,6 +83,8 @@ import me.rerere.hugeicons.stroke.ServerStack01
 import me.rerere.hugeicons.stroke.Settings03
 import me.rerere.hugeicons.stroke.Share04
 import me.rerere.hugeicons.stroke.Sun01
+import me.rerere.hugeicons.stroke.Moon02
+import me.rerere.hugeicons.stroke.SmartPhone01
 import me.rerere.hugeicons.stroke.Tiktok
 import me.rerere.hugeicons.stroke.Wallet01
 import me.rerere.hugeicons.stroke.WavingHand01
@@ -95,8 +98,14 @@ import me.rerere.rikkahub.data.files.FilesManager
 import me.rerere.rikkahub.data.flowbee.FlowBeeDefaults
 import me.rerere.rikkahub.ui.components.nav.BackButton
 import me.rerere.rikkahub.ui.components.ui.CardGroup
-import me.rerere.rikkahub.ui.components.ui.Select
-import me.rerere.rikkahub.ui.components.ui.icons.TencentQQIcon
+import me.rerere.rikkahub.ui.components.ui.CardGroupIcon
+import me.rerere.rikkahub.ui.components.ui.ConnectedChoiceButtons
+import me.rerere.rikkahub.ui.components.ui.ConnectedChoiceLabel
+import me.rerere.rikkahub.ui.components.ui.permission.LocalNetworkPermissionCard
+import me.rerere.rikkahub.ui.components.ui.permission.NotificationPermissionCard
+import me.rerere.rikkahub.ui.components.ui.permission.rememberLocalNetworkPermissionState
+import me.rerere.rikkahub.ui.components.ui.permission.rememberNotificationPermissionState
+import me.rerere.ui.icons.TencentQQIcon
 import me.rerere.rikkahub.ui.context.LocalNavController
 import me.rerere.rikkahub.ui.context.Navigator
 import me.rerere.rikkahub.ui.hooks.rememberColorMode
@@ -113,6 +122,7 @@ import org.koin.compose.koinInject
 fun SettingPage(vm: SettingVM = koinViewModel()) {
     val navController = LocalNavController.current
     val settings by vm.settings.collectAsStateWithLifecycle()
+    val launchCount by vm.launchCount.collectAsStateWithLifecycle()
     val filesManager: FilesManager = koinInject()
     var colorMode by rememberColorMode()
 
@@ -148,17 +158,17 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
         vm.refreshFlowBeeBalance()
     }
 
-    if (settings.launchCount > 100 && (settings.launchCount - settings.sponsorAlertDismissedAt) >= 50) {
+    if (!settings.init && launchCount > 100 && (launchCount - settings.sponsorAlertDismissedAt) >= 50) {
         AlertDialog(
             onDismissRequest = {
-                vm.updateSettings(settings.copy(sponsorAlertDismissedAt = settings.launchCount))
+                vm.updateSettings { it.copy(sponsorAlertDismissedAt = launchCount) }
             },
             icon = { Icon(HugeIcons.WavingHand01, null) },
             title = { Text(stringResource(R.string.setting_page_sponsor_alert_title)) },
             text = { Text(stringResource(R.string.setting_page_sponsor_alert_desc)) },
             confirmButton = {
                 Button(onClick = {
-                    vm.updateSettings(settings.copy(sponsorAlertDismissedAt = settings.launchCount))
+                    vm.updateSettings { it.copy(sponsorAlertDismissedAt = launchCount) }
                     navController.navigate(Screen.SettingDonate)
                 }) {
                     Text(stringResource(R.string.setting_page_sponsor_alert_confirm))
@@ -166,7 +176,7 @@ fun SettingPage(vm: SettingVM = koinViewModel()) {
             },
             dismissButton = {
                 TextButton(onClick = {
-                    vm.updateSettings(settings.copy(sponsorAlertDismissedAt = settings.launchCount))
+                    vm.updateSettings { it.copy(sponsorAlertDismissedAt = launchCount) }
                 }) {
                     Text(stringResource(R.string.setting_page_sponsor_alert_dismiss))
                 }
@@ -230,6 +240,8 @@ private fun SettingPageContent(
     countChatFiles: suspend () -> Pair<Int, Long>,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val localNetworkPermission = rememberLocalNetworkPermissionState()
+    val notificationPermission = rememberNotificationPermissionState()
 
     Scaffold(
         topBar = {
@@ -287,36 +299,49 @@ private fun SettingPageContent(
                 }
             }
 
-            item("generalSettings") {
-                val selectedColorModeText = when (colorMode) {
-                    ColorMode.SYSTEM -> stringResource(R.string.setting_page_color_mode_system)
-                    ColorMode.LIGHT -> stringResource(R.string.setting_page_color_mode_light)
-                    ColorMode.DARK -> stringResource(R.string.setting_page_color_mode_dark)
+            if (localNetworkPermission?.allRequiredPermissionsGranted == false) {
+                item("localNetworkPermission") {
+                    LocalNetworkPermissionCard(permissionState = localNetworkPermission)
                 }
+            }
+
+            if (notificationPermission?.allRequiredPermissionsGranted == false) {
+                item("notificationPermission") {
+                    NotificationPermissionCard(permissionState = notificationPermission)
+                }
+            }
+
+            item("generalSettings") {
+                val containerColor = MaterialTheme.colorScheme.primaryContainer
+                val contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 CardGroup(
                     modifier = Modifier.padding(horizontal = 8.dp),
                     title = { Text(stringResource(R.string.setting_page_general_settings)) },
                 ) {
-                    item(
-                        leadingContent = { Icon(HugeIcons.Sun01, null) },
-                        trailingContent = {
-                            Select(
-                                options = ColorMode.entries,
-                                selectedOption = colorMode,
-                                onOptionSelected = onColorModeSelected,
-                                optionToString = {
-                                    when (it) {
-                                        ColorMode.SYSTEM -> stringResource(R.string.setting_page_color_mode_system)
-                                        ColorMode.LIGHT -> stringResource(R.string.setting_page_color_mode_light)
-                                        ColorMode.DARK -> stringResource(R.string.setting_page_color_mode_dark)
-                                    }
+                    formItem {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            CardGroupIcon(colorMode.icon(), containerColor = containerColor, contentColor = contentColor)
+                            Text(stringResource(R.string.setting_page_color_mode))
+                        }
+                        ConnectedChoiceButtons(
+                            options = ColorMode.entries,
+                            selected = colorMode,
+                            onSelect = { onColorModeSelected(it) },
+                        ) { mode, selected ->
+                            ConnectedChoiceLabel(
+                                text = when (mode) {
+                                    ColorMode.SYSTEM -> stringResource(R.string.setting_page_color_mode_system)
+                                    ColorMode.LIGHT -> stringResource(R.string.setting_page_color_mode_light)
+                                    ColorMode.DARK -> stringResource(R.string.setting_page_color_mode_dark)
                                 },
-                                modifier = Modifier.width(150.dp)
+                                selected = selected,
+                                icon = mode.icon(),
                             )
-                        },
-                        headlineContent = { Text(stringResource(R.string.setting_page_color_mode)) },
-                        supportingContent = { Text(selectedColorModeText) },
-                    )
+                        }
+                    }
                     item(
                         onClick = { onNavigate(Screen.SettingPreferences) },
                         leadingContent = { Icon(HugeIcons.Settings03, null) },
@@ -366,6 +391,12 @@ private fun SettingPageContent(
                         leadingContent = { Icon(HugeIcons.Megaphone01, null) },
                         supportingContent = { Text(stringResource(R.string.setting_page_tts_service_desc)) },
                         headlineContent = { Text(stringResource(R.string.setting_page_tts_service)) },
+                    )
+                    item(
+                        onClick = { onNavigate(Screen.SettingMedia) },
+                        leadingContent = { Icon(HugeIcons.Image02, null) },
+                        supportingContent = { Text(stringResource(R.string.setting_page_media_desc)) },
+                        headlineContent = { Text(stringResource(R.string.setting_page_media)) },
                     )
                     item(
                         onClick = { onNavigate(Screen.SettingMcp) },
@@ -937,4 +968,10 @@ private fun SettingPagePreview() {
             )
         }
     }
+}
+
+private fun ColorMode.icon(): ImageVector = when (this) {
+    ColorMode.SYSTEM -> HugeIcons.SmartPhone01
+    ColorMode.LIGHT -> HugeIcons.Sun01
+    ColorMode.DARK -> HugeIcons.Moon02
 }
