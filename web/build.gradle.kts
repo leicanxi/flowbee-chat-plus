@@ -65,17 +65,22 @@ val webUiBuilt = webStaticResourcesDir.file("index.html").asFile.exists()
 //    web 模块自身的 assemble/bundle 是次要的（app 才是最终 APK），
 //    关键是**其他模块**出包时也要带上前端 —— 否则打出的 APK 里 WebUI 为空。
 //    因此用 `tasks.matching` 监听全项目任务名，而不是只听本项目。
+//
+//    注意要覆盖带构建风味的任务名（assembleGithubRelease / assemblePlayDebug …）：
+//    上游引入 github/play 风味后，任务名里多了风味段，只写 assembleRelease 会漏掉，
+//    结果就是「构建成功、APK 里前端是空的」。这里用正则匹配 assemble / bundle +
+//    可选风味 + Debug/Release，同时排除 assembleGithubDebugAndroidTest 这类测试任务。
 val packagingTaskNames = setOf(
-    "assembleDebug",
-    "assembleRelease",
     "bundleDebugAar",
     "bundleReleaseAar",
 )
+val packagingTaskPattern = Regex("^(assemble|bundle)([A-Z][A-Za-z]*)?(Debug|Release)$")
 rootProject.allprojects {
-    tasks.matching { it.name in packagingTaskNames }.configureEach {
-        // 避免自依赖：buildWebUi 本身不匹配这些名字
-        dependsOn(buildWebUi)
-    }
+    tasks.matching { it.name in packagingTaskNames || packagingTaskPattern.matches(it.name) }
+        .configureEach {
+            // 避免自依赖：buildWebUi 本身不匹配这些名字
+            dependsOn(buildWebUi)
+        }
 }
 
 // ② 首次构建（static 缺失）：编译/测试也要先产出一次

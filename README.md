@@ -101,14 +101,16 @@
 git clone https://github.com/leicanxi/flowbee-chat-plus.git
 cd flowbee-chat-plus
 
-# Debug APK
-./gradlew :app:assembleDebug
+# Debug APK（github 风味：可自更新，也是我们发到 R2 的那套）
+./gradlew :app:assembleGithubDebug
 
 # 安装到已连接设备
-./gradlew :app:installDebug
+./gradlew :app:installGithubDebug
 ```
 
-构建产物位于 `app/build/outputs/apk/debug/app-debug.apk`。
+构建产物位于 `app/build/outputs/apk/github/debug/`（`arm64-v8a` / `x86_64` / `universal` 三个变体）。
+
+> 上游引入了 `github` / `play` 两个构建风味。`play` 是上游为 Play 商店准备的特化版本（关闭自更新等），本项目只使用 `github` 风味。
 
 > `app/google-services.json` 是仓库内特意提交的占位配置，仅用于让 Firebase 插件完成构建；正式发布请替换为自己的配置。
 

@@ -106,7 +106,9 @@ jobs:
       - name: Gradle Build
         env:
           FLOWBEE_BUILD_NUMBER: ${{ github.run_number }}
-        run: ./gradlew assembleRelease
+        # 只打 github 风味：play 风味关掉了自更新（IS_PLAY_STORE=true），
+        # 是上游为 Play 商店准备的特化版本，我们走 R2 自更新用不到。
+        run: ./gradlew :app:assembleGithubRelease
 
       - name: Publish to R2
         env:
@@ -117,7 +119,7 @@ jobs:
           VERSION_NAME: ${{ steps.version.outputs.name }}
           COMMIT_SHA: ${{ github.sha }}
         run: |
-          APK="$(ls app/build/outputs/apk/release/*arm64-v8a*.apk | head -n1)"
+          APK="$(ls app/build/outputs/apk/github/release/*arm64-v8a*.apk | head -n1)"
           echo "发布安装包：$APK"
           APK_FILE="$APK" bash .github/scripts/publish-update.sh
 
@@ -127,5 +129,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: flowbee-apk-${{ github.run_number }}
-          path: app/build/outputs/apk/release/*arm64-v8a*.apk
+          path: app/build/outputs/apk/github/release/*arm64-v8a*.apk
           retention-days: 7
