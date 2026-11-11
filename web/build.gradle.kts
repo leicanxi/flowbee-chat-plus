@@ -83,6 +83,14 @@ rootProject.allprojects {
         }
 }
 
+// buildWebUi 往 `src/main/resources/static` 写文件，而 `process*JavaRes` 把
+// `src/main/resources` 整个目录当作输入。Gradle 9 的隐式依赖校验会因此报错
+// （lint / 打包时 buildWebUi 在任务图里就会触发）。
+// 用 mustRunAfter 声明先后关系：它不会把 buildWebUi 拉进无关的任务图，真正打包时
+// 由上面的 packaging 钩子负责 dependsOn。
+tasks.matching { it.name.startsWith("process") && it.name.endsWith("JavaRes") }
+    .configureEach { mustRunAfter(buildWebUi) }
+
 // ② 首次构建（static 缺失）：编译/测试也要先产出一次
 if (!webUiBuilt) {
     logger.lifecycle(
